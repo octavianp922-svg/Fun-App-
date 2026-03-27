@@ -1,0 +1,270 @@
+{
+    "id": "episode1",
+    "title": "Vacanta in familie",
+    "startScene": "e1_s01",
+    "scenes": {
+        "e1_s01": {
+            "background": "airport",
+            "characters": ["cristina", "victor"],
+            "speaker": "cristina",
+            "dialogue": "Victor... Poti sa-mi explici de ce avem TREI valize cu geci de iarna si mergem la MARE?!",
+            "next": "e1_s02"
+        },
+        "e1_s02": {
+            "background": "airport",
+            "characters": ["victor", "cristina"],
+            "speaker": "victor",
+            "dialogue": "Tehnic vorbind, mama, am verificat bagajele. N-am zis ca am pus ce trebuie. Dar gandeste-te: daca vine o era glaciara la mare? Suntem pregatiti!",
+            "next": "e1_s03"
+        },
+        "e1_s03": {
+            "background": "airport",
+            "characters": ["veroana", "cristina"],
+            "speaker": "narrator",
+            "dialogue": "In acel moment, bunica Veroana apare triumfatoare, tragand dupa ea o valiza cat ea de mare si o punga de covrigi.",
+            "next": "e1_s04"
+        },
+        "e1_s04": {
+            "background": "airport",
+            "characters": ["veroana", "cristina"],
+            "speaker": "veroana",
+            "dialogue": "Pe vremea mea, la vacanta plecai cu o paine, un salam si rugaciunea de la bunica. Si ne descurcam EXCELENT! Acum, eu am un plan mai bun. Mergem la MUNTE!",
+            "choices": [
+                {
+                    "text": "Urmeaza planul bunicii - merge la munte!",
+                    "next": "e1_s05a"
+                },
+                {
+                    "text": "Ramai la planul initial - mergem la mare!",
+                    "next": "e1_s05b"
+                }
+            ]
+        },
+        "e1_s05a": {
+            "background": "car",
+            "characters": ["veroana", "octavian"],
+            "speaker": "veroana",
+            "dialogue": "Octavian, la dreapta! Nu, CEALALTA dreapta! Pe vremea mea, caii stiau drumul singuri. Masinile astea sunt mai proaste ca un magar obosit!",
+            "next": "e1_s06a"
+        },
+        "e1_s06a": {
+            "background": "car",
+            "characters": ["arya", "ana"],
+            "speaker": "arya",
+            "dialogue": "Bunicaaa, eu vreau la mare! Acolo sunt pesti! Si castele de nisip! Si RECHINI! Vreau sa vad un RECHIN!",
+            "next": "e1_s07a"
+        },
+        "e1_s07a": {
+            "background": "car",
+            "characters": ["octavian", "ana"],
+            "speaker": "octavian",
+            "dialogue": "Stiti ce? Eu zic ca e frumos oriunde mergem. Natura e natura, fie ea mare sau munte sau... ce e acolo?",
+            "next": "e1_s08a"
+        },
+        "e1_s08a": {
+            "background": "village",
+            "characters": ["cristina", "veroana"],
+            "speaker": "cristina",
+            "dialogue": "Bunico, tu ne-ai adus intr-un sat. Nu e nici mare, nici munte. E un sat cu TREI case si o capra.",
+            "choices": [
+                {
+                    "text": "Ramanem in sat - capra pare prietenoasa!",
+                    "next": "e1_s09_village"
+                },
+                {
+                    "text": "Continuam spre munte - trebuie sa fie aproape!",
+                    "next": "e1_s09_mountain"
+                }
+            ]
+        },
+        "e1_s09_village": {
+            "background": "village",
+            "characters": ["victor", "arya"],
+            "speaker": "victor",
+            "dialogue": "Mama, capra asta ma urmareste. Cred ca ma place. O sa-l numesc Marcel! Marcel, vino la tati!",
+            "next": "e1_s10_village"
+        },
+        "e1_s10_village": {
+            "background": "village",
+            "characters": ["veroana", "cristina"],
+            "speaker": "veroana",
+            "dialogue": "Vedeti? Asta e vacanta ADEVARATA! Aer curat, liniste, o capra prietenoasa. Pe vremea mea, asa aratau TOATE vacantele!",
+            "next": "e1_s11_village"
+        },
+        "e1_s11_village": {
+            "background": "village",
+            "characters": ["ana", "octavian"],
+            "speaker": "narrator",
+            "dialogue": "Neauzit, o batrana din sat apare si ii invita pe toti la masa. Se pare ca nu a mai avut vizitatori din 1987.",
+            "choices": [
+                {
+                    "text": "Acceptam invitatia - suntem flamanzi!",
+                    "next": "e1_end_village"
+                },
+                {
+                    "text": "Facem noi gratar cu ce gasim - aventura!",
+                    "next": "e1_end_celebs"
+                }
+            ]
+        },
+        "e1_end_village": {
+            "background": "village",
+            "characters": ["veroana", "victor"],
+            "speaker": "narrator",
+            "dialogue": "Familia a petrecut cea mai buna vacanta din viata lor intr-un sat uitat de lume. Victor l-a adoptat pe Marcel (capra), bunica a devenit cea mai buna prietena cu batrana din sat, iar Arya a invatat sa mulga o vaca. Cristina? A baut vin de casa si a uitat de stres pentru prima data in 10 ani.",
+            "ending": "e1_end_village"
+        },
+        "e1_end_celebs": {
+            "background": "village",
+            "characters": ["cristina", "octavian"],
+            "speaker": "narrator",
+            "dialogue": "Gratarul improvizat a atras tot satul (toate cele 7 persoane). Octavian a devenit legendar pentru retetele lui, Victor a organizat un concurs de dans cu capra Marcel, iar familia a fost declarata cetatean de onoare al satului. Acum au vacanta gratuita pe viata... intr-un sat cu 3 case.",
+            "ending": "e1_end_celebs"
+        },
+        "e1_s09_mountain": {
+            "background": "mountain",
+            "characters": ["cristina", "veroana"],
+            "speaker": "cristina",
+            "dialogue": "OK, am ajuns la munte. Avem geci de iarna (multumim, Victor), o bunica fericita, si zero experienta de munte. Ce facem?",
+            "next": "e1_s10_mountain"
+        },
+        "e1_s10_mountain": {
+            "background": "mountain",
+            "characters": ["victor", "arya"],
+            "speaker": "victor",
+            "dialogue": "Mama, vezi? Gecile CHIAR au fost o idee buna! Sunt un VIZIONAR! De acum inainte, fac eu bagajele de fiecare data!",
+            "next": "e1_s11_mountain"
+        },
+        "e1_s11_mountain": {
+            "background": "mountain",
+            "characters": ["veroana", "octavian"],
+            "speaker": "veroana",
+            "dialogue": "Pe vremea mea, urcam muntii in papuci si nu ne plangeam! Acum, Octavian, ia du-te si fa un foc. Cu mainile. Ca pe vremuri!",
+            "next": "e1_end_mountain"
+        },
+        "e1_end_mountain": {
+            "background": "mountain",
+            "characters": ["cristina", "victor"],
+            "speaker": "narrator",
+            "dialogue": "Vacanta la munte a fost... o aventura. Bunica a povestit povesti de groaza langa foc (despre preturile din piata), Victor a gasit o capra pe care a numit-o Marcel (evident), iar Arya a refuzat sa plece pana n-a atins varful muntelui. A atins un deal mic, dar nimeni n-a corectat-o.",
+            "ending": "e1_end_mountain"
+        },
+        "e1_s05b": {
+            "background": "car",
+            "characters": ["cristina", "octavian"],
+            "speaker": "cristina",
+            "dialogue": "Octavian, porneste GPS-ul. Mergem la mare, asa cum era PLANUL. Bunico, te rog, nu mai comenta!",
+            "next": "e1_s06b"
+        },
+        "e1_s06b": {
+            "background": "car",
+            "characters": ["octavian", "ana"],
+            "speaker": "octavian",
+            "dialogue": "GPS-ul zice sa facem stanga. Nu... dreapta. Nu... intoarcere! Ana, tu intelegi ceva? Eu cred ca GPS-ul a innebunit.",
+            "next": "e1_s07b"
+        },
+        "e1_s07b": {
+            "background": "car",
+            "characters": ["victor", "veroana"],
+            "speaker": "victor",
+            "dialogue": "Stiti ce a zis GPS-ul? 'Recalculare ruta'. L-am numarat. A zis-o de 47 de ori. PATRUZECI SI SAPTE!",
+            "next": "e1_s08b"
+        },
+        "e1_s08b": {
+            "background": "car",
+            "characters": ["veroana", "arya"],
+            "speaker": "veroana",
+            "dialogue": "Pe vremea mea, GPS-ul era un batran la marginea drumului care-ti zicea 'tot inainte, baiatu'. Si MEREU avea dreptate! Spre deosebire de cutia asta vorbitoare.",
+            "choices": [
+                {
+                    "text": "Oprim si intrebam pe cineva - stil bunica!",
+                    "next": "e1_s09b_ask"
+                },
+                {
+                    "text": "Continuam cu GPS-ul - trebuie sa aiba dreptate!",
+                    "next": "e1_s09b_gps"
+                }
+            ]
+        },
+        "e1_s09b_ask": {
+            "background": "village",
+            "characters": ["octavian", "veroana"],
+            "speaker": "narrator",
+            "dialogue": "Au oprit la o benzinarie si au intrebat un domn care bea cafea. Domnul s-a uitat la ei, a ras, si le-a zis: 'Marea e in directia OPUSA, fratilor. Voi mergeti spre Siberia.'",
+            "next": "e1_s10b"
+        },
+        "e1_s09b_gps": {
+            "background": "car",
+            "characters": ["cristina", "victor"],
+            "speaker": "narrator",
+            "dialogue": "Au urmat GPS-ul inca doua ore. GPS-ul i-a dus intr-o parcare de la un supermarket. 'Ati ajuns la destinatie,' a anuntat el, triumfator.",
+            "next": "e1_s10b"
+        },
+        "e1_s10b": {
+            "background": "beach",
+            "characters": ["cristina", "arya"],
+            "speaker": "narrator",
+            "dialogue": "Dupa alte trei ore de condus, au ajuns in sfarsit la mare. Problema? Era ora 10 seara.",
+            "next": "e1_s11b"
+        },
+        "e1_s11b": {
+            "background": "night",
+            "characters": ["victor", "arya"],
+            "speaker": "arya",
+            "dialogue": "WOOOW, marea! E intuneric si nu vad nimic! Dar AUD marea! E CEL MAI BUN LUCRU DIN LUME!",
+            "next": "e1_s12b"
+        },
+        "e1_s12b": {
+            "background": "beach",
+            "characters": ["cristina", "veroana"],
+            "speaker": "veroana",
+            "dialogue": "Bon, a meritat drumul? Mare, nisip, intuneric total... Pe vremea mea, ajungeam la mare pe lumina! Pentru ca plecam la 3 dimineata!",
+            "choices": [
+                {
+                    "text": "Dormim pe plaja sub stele - aventura!",
+                    "next": "e1_end_beach_stars"
+                },
+                {
+                    "text": "Cautam un hotel - civilizatie!",
+                    "next": "e1_end_beach_hotel"
+                }
+            ]
+        },
+        "e1_end_beach_stars": {
+            "background": "night",
+            "characters": ["victor", "arya"],
+            "speaker": "narrator",
+            "dialogue": "Au dormit pe plaja, sub stele. Victor a construit un castel de nisip in forma de iglu ('pentru geci, mama!'). Arya a adormit numarand stelele si a ajuns pana la 7. Bunica a povestit despre cum pe vremea ei nu existau stele, doar intuneric si speranta. Cea mai buna noapte ever.",
+            "ending": "e1_end_beach_stars"
+        },
+        "e1_end_beach_hotel": {
+            "background": "beach",
+            "characters": ["cristina", "octavian"],
+            "speaker": "narrator",
+            "dialogue": "Au gasit un hotel. Singura camera disponibila avea un pat matrimonial si o canapea. Au dormit 7 persoane acolo. Bunica a sforait asa de tare ca vecinii au sunat la receptie. Victor a dormit in cada. A zis ca e 'cel mai confortabil pat din lume'. Vacanta perfecta? Nu. Dar cu siguranta de neuitat!",
+            "ending": "e1_end_beach_hotel"
+        }
+    },
+    "endings": {
+        "e1_end_village": {
+            "title": "Sat cu Suflet",
+            "description": "Ati descoperit ca cele mai bune vacante sunt cele neplanificate. Marcel (capra) va trimite salutari. Bunica are dreptate: pe vremea ei, CHIAR era mai bine."
+        },
+        "e1_end_celebs": {
+            "title": "Cetateni de Onoare",
+            "description": "Sunteti acum celebri intr-un sat cu 7 locuitori. Octavian e masterchef-ul satului, iar Victor e antrenorul de dans al caprei Marcel. Faimosii din sat!"
+        },
+        "e1_end_mountain": {
+            "title": "Cine Are Nevoie de Mare?",
+            "description": "Muntele v-a primit cu bratele deschise. Gecile lui Victor au fost UTILE (mirare generala). Bunica e regina focului de tabara, iar Arya e cuceritoarea dealurilor."
+        },
+        "e1_end_beach_stars": {
+            "title": "Nisip in Papuci",
+            "description": "Ati ajuns la mare... noaptea. Dar noaptea pe plaja, sub stele, cu familia, a fost magic. Victor doarme in continuare in iglu de nisip acasa."
+        },
+        "e1_end_beach_hotel": {
+            "title": "7 Intr-o Camera",
+            "description": "Vacanta la mare, stil sardina. 7 persoane, 1 camera, 0 regrete (multe sforait). Victor a descoperit ca doarme cel mai bine in cada."
+        }
+    }
+}

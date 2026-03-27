@@ -1,0 +1,228 @@
+#screen-game {
+    display: none;
+}
+
+#screen-game.active {
+    display: block;
+}
+
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Background layers */
+#bg-layer, #bg-layer-next {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.6s ease;
+}
+
+#bg-layer-next {
+    opacity: 0;
+}
+
+/* Characters */
+#characters-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 40px;
+    padding: 0 60px;
+    padding-top: var(--safe-top);
+}
+
+.character-portrait {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.character-portrait.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.character-portrait .avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.2rem;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.character-portrait .char-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Dialogue Box */
+#dialogue-box {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-height: 30%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.85) 15%, rgba(0, 0, 0, 0.95) 100%);
+    padding: 40px 40px calc(24px + var(--safe-bottom)) 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+#speaker-name {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    align-self: flex-start;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+#dialogue-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: var(--color-text);
+    min-height: 3em;
+    cursor: pointer;
+}
+
+#tap-indicator {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 12px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+#tap-indicator.hidden {
+    display: none;
+}
+
+/* Choices */
+#choices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+#choices-container.hidden {
+    display: none;
+}
+
+.choice-btn {
+    background: rgba(233, 69, 96, 0.15);
+    border: 2px solid var(--color-accent);
+    color: var(--color-text);
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.2s, transform 0.15s;
+    min-height: 48px;
+    line-height: 1.4;
+}
+
+.choice-btn:active {
+    background: rgba(233, 69, 96, 0.4);
+    transform: scale(0.98);
+}
+
+/* Ending Screen */
+#screen-ending {
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+    padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+
+.ending-container {
+    text-align: center;
+    padding: 40px;
+    max-width: 600px;
+}
+
+#ending-badge {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+#ending-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-gold);
+    margin-bottom: 16px;
+}
+
+#ending-description {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--color-text-dim);
+    margin-bottom: 36px;
+}
+
+.ending-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Responsive - Portrait */
+@media (orientation: portrait) {
+    #characters-layer {
+        height: 50%;
+        gap: 20px;
+        padding: 0 30px;
+    }
+
+    .character-portrait .avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+    }
+
+    #dialogue-box {
+        min-height: 40%;
+        padding: 30px 24px calc(20px + var(--safe-bottom)) 24px;
+    }
+
+    #dialogue-text {
+        font-size: 1.05rem;
+    }
+
+    .game-title {
+        font-size: 2.2rem;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}

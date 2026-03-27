@@ -87,7 +87,7 @@ class NovelUI {
             if (charIds[i]) {
                 const char = CHARACTERS[charIds[i]];
                 if (char) {
-                    const avatarHtml = Avatars.create(charIds[i], 110);
+                    const avatarHtml = Avatars.create(charIds[i], 140);
                     slot.innerHTML = `
                         <div class="avatar-container">${avatarHtml}</div>
                         <span class="char-name">${char.name}</span>

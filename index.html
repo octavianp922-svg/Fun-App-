@@ -16,12 +16,37 @@
     <link rel="stylesheet" href="css/transitions.css">
 </head>
 <body>
+    <!-- Particule animate fundal -->
+    <canvas id="particles-canvas"></canvas>
+
     <!-- Ecran: Meniu Principal -->
     <div id="screen-menu" class="screen active">
         <div class="menu-container">
-            <h1 class="game-title">Povestiri de Familie</h1>
-            <p class="game-subtitle">Un joc cu alegeri, haos si mult umor</p>
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 120 120" class="logo-svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#e94560"/>
+                                <stop offset="100%" style="stop-color:#f4d03f"/>
+                            </linearGradient>
+                        </defs>
+                        <circle cx="60" cy="38" r="18" fill="url(#logoGrad)" opacity="0.9"/>
+                        <circle cx="35" cy="65" r="14" fill="#9C27B0" opacity="0.8"/>
+                        <circle cx="85" cy="65" r="14" fill="#2196F3" opacity="0.8"/>
+                        <circle cx="48" cy="88" r="12" fill="#4CAF50" opacity="0.8"/>
+                        <circle cx="72" cy="88" r="12" fill="#FF9800" opacity="0.8"/>
+                        <circle cx="60" cy="60" r="10" fill="#795548" opacity="0.7"/>
+                    </svg>
+                </div>
+                <h1 class="game-title">Povestiri de Familie</h1>
+                <p class="game-subtitle">Un joc cu alegeri, haos si mult umor</p>
+            </div>
             <div class="episode-grid" id="episode-grid"></div>
+            <button id="btn-sound-toggle" class="sound-toggle" aria-label="Sunet on/off">
+                <span class="sound-on">&#128266;</span>
+                <span class="sound-off" style="display:none">&#128263;</span>
+            </button>
         </div>
     </div>
 
@@ -30,33 +55,46 @@
         <div id="game-container">
             <div id="bg-layer"></div>
             <div id="bg-layer-next"></div>
+            <div id="bg-particles"></div>
             <div id="characters-layer">
                 <div id="character-left" class="character-portrait"></div>
                 <div id="character-right" class="character-portrait"></div>
             </div>
             <div id="dialogue-box">
-                <div id="speaker-name"></div>
-                <div id="dialogue-text"></div>
-                <div id="tap-indicator">Apasa pentru a continua...</div>
-                <div id="choices-container"></div>
+                <div id="dialogue-inner">
+                    <div id="speaker-name"></div>
+                    <div id="dialogue-text"></div>
+                    <div id="tap-indicator">
+                        <span class="tap-arrow">&#9660;</span> Apasa pentru a continua
+                    </div>
+                    <div id="choices-container"></div>
+                </div>
             </div>
-            <button id="btn-menu" class="btn-overlay" aria-label="Inapoi la meniu">&#9776;</button>
+            <button id="btn-menu" class="btn-overlay" aria-label="Inapoi la meniu">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                </svg>
+            </button>
         </div>
     </div>
 
     <!-- Ecran: Final Episod -->
     <div id="screen-ending" class="screen">
         <div class="ending-container">
-            <div id="ending-badge">&#127942;</div>
+            <div id="ending-confetti"></div>
+            <div id="ending-badge"></div>
             <h2 id="ending-title"></h2>
             <p id="ending-description"></p>
+            <div class="ending-stats" id="ending-stats"></div>
             <div class="ending-buttons">
-                <button id="btn-replay" class="btn-primary">Joaca din nou</button>
+                <button id="btn-replay" class="btn-primary btn-glow">Joaca din nou</button>
                 <button id="btn-back-menu" class="btn-secondary">Inapoi la meniu</button>
             </div>
         </div>
     </div>
 
+    <script src="js/sound.js"></script>
+    <script src="js/particles.js"></script>
     <script src="js/characters.js"></script>
     <script src="js/engine.js"></script>
     <script src="js/ui.js"></script>

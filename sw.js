@@ -1,4 +1,4 @@
-const CACHE_NAME = "familie-v1";
+const CACHE_NAME = "familie-v2";
 const ASSETS = [
     "./index.html",
     "./css/main.css",
@@ -10,6 +10,8 @@ const ASSETS = [
     "./js/ui.js",
     "./js/characters.js",
     "./js/save.js",
+    "./js/sound.js",
+    "./js/particles.js",
     "./data/episode1.json",
     "./data/episode2.json",
     "./data/episode3.json"

@@ -1,3 +1,9 @@
+const EPISODE_ICONS = {
+    episode1: "\u{2708}\u{FE0F}",
+    episode2: "\u{1F384}",
+    episode3: "\u{1F382}"
+};
+
 const App = {
     engine: null,
     ui: null,
@@ -8,6 +14,7 @@ const App = {
         this.ui = new NovelUI(this.engine);
         this.ui.setEndingCallback((ending) => this.showEnding(ending));
 
+        ParticleSystem.init();
         this.renderMenu();
         this.bindEvents();
         this.showScreen("screen-menu");
@@ -15,19 +22,36 @@ const App = {
 
     bindEvents() {
         document.getElementById("btn-menu").addEventListener("click", () => {
+            SoundManager.menuClick();
             this.showScreen("screen-menu");
             this.renderMenu();
         });
         document.getElementById("btn-replay").addEventListener("click", () => {
+            SoundManager.menuClick();
             if (this.currentEpisodeId) {
                 SaveManager.clearProgress(this.currentEpisodeId);
                 this.startEpisode(this.currentEpisodeId);
             }
         });
         document.getElementById("btn-back-menu").addEventListener("click", () => {
+            SoundManager.menuClick();
             this.showScreen("screen-menu");
             this.renderMenu();
         });
+        document.getElementById("btn-sound-toggle").addEventListener("click", () => {
+            SoundManager.init();
+            SoundManager.toggle();
+            if (SoundManager.enabled) SoundManager.tap();
+        });
+
+        document.addEventListener('touchstart', () => {
+            SoundManager.init();
+            SoundManager.resume();
+        }, { once: true });
+        document.addEventListener('click', () => {
+            SoundManager.init();
+            SoundManager.resume();
+        }, { once: true });
     },
 
     renderMenu() {
@@ -37,25 +61,34 @@ const App = {
         EPISODES.forEach((ep) => {
             const card = document.createElement("div");
             card.className = "episode-card";
-            if (SaveManager.isCompleted(ep.id)) {
-                card.classList.add("completed");
+            const completed = SaveManager.isCompleted(ep.id);
+            const hasSave = SaveManager.hasSave(ep.id);
+
+            if (completed) card.classList.add("completed");
+
+            let statusHtml = "";
+            if (hasSave) {
+                statusHtml = `<div class="episode-status continue">\u{25B6}\u{FE0F} Continua aventura</div>`;
+            } else if (completed) {
+                statusHtml = `<div class="episode-status completed">\u{2705} Terminat - joaca din nou?</div>`;
             }
 
-            let statusText = "";
-            if (SaveManager.hasSave(ep.id)) {
-                statusText = "&#9654; Continua";
-            } else if (SaveManager.isCompleted(ep.id)) {
-                statusText = "&#10003; Terminat - joaca din nou?";
-            }
+            const icon = EPISODE_ICONS[ep.id] || "\u{1F4D6}";
 
             card.innerHTML = `
+                <span class="episode-icon">${icon}</span>
                 <div class="episode-number">Episodul ${ep.number}</div>
                 <div class="episode-title">${ep.title}</div>
                 <div class="episode-desc">${ep.description}</div>
-                ${statusText ? `<div class="episode-status">${statusText}</div>` : ""}
+                ${statusHtml}
             `;
 
-            card.addEventListener("click", () => this.startEpisode(ep.id));
+            card.addEventListener("click", () => {
+                SoundManager.init();
+                SoundManager.resume();
+                SoundManager.menuClick();
+                this.startEpisode(ep.id);
+            });
             grid.appendChild(card);
         });
     },
@@ -78,7 +111,8 @@ const App = {
 
             this.ui.reset();
             this.showScreen("screen-game");
-            this.ui.renderScene();
+            SoundManager.episodeStart();
+            setTimeout(() => this.ui.renderScene(), 300);
         } catch (err) {
             console.error("Eroare la incarcarea episodului:", err);
         }
@@ -89,9 +123,26 @@ const App = {
         const endingId = scene ? scene.ending : "unknown";
         SaveManager.markCompleted(this.currentEpisodeId, endingId);
 
+        document.getElementById("ending-badge").textContent = "\u{1F3C6}";
         document.getElementById("ending-title").textContent = ending.title;
         document.getElementById("ending-description").textContent = ending.description;
+
+        const choices = this.engine.choiceHistory.length;
+        const statsEl = document.getElementById("ending-stats");
+        statsEl.innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value">${choices}</div>
+                <div class="stat-label">Alegeri facute</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">\u{2B50}</div>
+                <div class="stat-label">Final deblocat</div>
+            </div>
+        `;
+
         this.showScreen("screen-ending");
+        SoundManager.ending();
+        ParticleSystem.confetti();
     },
 
     showScreen(screenId) {
@@ -102,7 +153,7 @@ const App = {
         if (target) {
             target.classList.add("active");
             target.classList.add("screen-enter");
-            setTimeout(() => target.classList.remove("screen-enter"), 400);
+            setTimeout(() => target.classList.remove("screen-enter"), 500);
         }
     }
 };

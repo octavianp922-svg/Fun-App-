@@ -5,9 +5,11 @@ class NovelUI {
         this.typewriterDone = false;
         this.fullText = "";
         this.currentBg = null;
+        this.charTickCounter = 0;
 
         this.bgLayer = document.getElementById("bg-layer");
         this.bgLayerNext = document.getElementById("bg-layer-next");
+        this.bgParticles = document.getElementById("bg-particles");
         this.charLeft = document.getElementById("character-left");
         this.charRight = document.getElementById("character-right");
         this.speakerName = document.getElementById("speaker-name");
@@ -30,13 +32,15 @@ class NovelUI {
             }
         }
 
+        SoundManager.sceneTransition();
         this.setBackground(scene.background);
-        this.setCharacters(scene.characters || []);
+        this.setCharacters(scene.characters || [], scene.speaker);
         this.setSpeaker(scene.speaker);
         this.startTypewriter(scene.dialogue);
         this.choicesContainer.classList.add("hidden");
         this.choicesContainer.innerHTML = "";
         this.tapIndicator.classList.remove("hidden");
+        this.spawnBgParticles();
     }
 
     setBackground(bgKey) {
@@ -47,13 +51,29 @@ class NovelUI {
         setTimeout(() => {
             this.bgLayer.style.background = gradient;
             this.bgLayerNext.style.opacity = "0";
-        }, 600);
+        }, 800);
         this.currentBg = bgKey;
     }
 
-    setCharacters(charIds) {
+    spawnBgParticles() {
+        this.bgParticles.innerHTML = '';
+        for (let i = 0; i < 12; i++) {
+            const p = document.createElement('div');
+            p.className = 'bg-particle';
+            const size = 4 + Math.random() * 12;
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (8 + Math.random() * 12) + 's';
+            p.style.animationDelay = Math.random() * 5 + 's';
+            this.bgParticles.appendChild(p);
+        }
+    }
+
+    setCharacters(charIds, speakerId) {
         const slots = [this.charLeft, this.charRight];
         slots.forEach((slot, i) => {
+            slot.classList.remove('active-speaker', 'speaking');
             if (charIds[i]) {
                 const char = CHARACTERS[charIds[i]];
                 if (char) {
@@ -62,6 +82,12 @@ class NovelUI {
                         <span class="char-name">${char.name}</span>
                     `;
                     slot.classList.add("visible");
+                    if (charIds[i] === speakerId) {
+                        slot.classList.add('active-speaker');
+                        slot.style.setProperty('--speaker-color', char.color);
+                        slot.style.setProperty('--speaker-glow', char.color + '40');
+                        setTimeout(() => slot.classList.add('speaking'), 50);
+                    }
                 } else {
                     slot.classList.remove("visible");
                 }
@@ -83,32 +109,41 @@ class NovelUI {
         }
         this.speakerName.style.display = "inline-block";
         this.speakerName.textContent = char.name;
-        this.speakerName.style.background = char.color;
+        this.speakerName.style.background = `linear-gradient(135deg, ${char.color}, ${char.color}cc)`;
+        this.speakerName.style.animation = 'none';
+        this.speakerName.offsetHeight;
+        this.speakerName.style.animation = 'speakerAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
     }
 
     startTypewriter(text) {
         this.fullText = text;
         this.typewriterDone = false;
         this.dialogueText.textContent = "";
+        this.charTickCounter = 0;
         clearInterval(this.typewriterTimer);
 
         let i = 0;
         this.typewriterTimer = setInterval(() => {
             if (i < text.length) {
                 this.dialogueText.textContent += text[i];
+                this.charTickCounter++;
+                if (this.charTickCounter % 3 === 0) {
+                    SoundManager.typewriterTick();
+                }
                 i++;
             } else {
                 clearInterval(this.typewriterTimer);
                 this.typewriterDone = true;
                 this.onTypewriterComplete();
             }
-        }, 25);
+        }, 22);
     }
 
     skipTypewriter() {
         clearInterval(this.typewriterTimer);
         this.dialogueText.textContent = this.fullText;
         this.typewriterDone = true;
+        SoundManager.tap();
         this.onTypewriterComplete();
     }
 
@@ -127,6 +162,7 @@ class NovelUI {
             return;
         }
         if (this.engine.hasChoices()) return;
+        SoundManager.tap();
         if (this.engine.advanceScene()) {
             this.renderScene();
             SaveManager.saveProgress(this.engine);
@@ -153,6 +189,7 @@ class NovelUI {
     }
 
     onChoiceSelected(index) {
+        SoundManager.choiceSelect();
         if (this.engine.makeChoice(index)) {
             this.renderScene();
             SaveManager.saveProgress(this.engine);
@@ -175,9 +212,10 @@ class NovelUI {
         this.dialogueText.textContent = "";
         this.choicesContainer.innerHTML = "";
         this.choicesContainer.classList.add("hidden");
-        this.charLeft.classList.remove("visible");
-        this.charRight.classList.remove("visible");
+        this.charLeft.classList.remove("visible", "active-speaker", "speaking");
+        this.charRight.classList.remove("visible", "active-speaker", "speaking");
         this.bgLayer.style.background = "";
         this.bgLayerNext.style.opacity = "0";
+        if (this.bgParticles) this.bgParticles.innerHTML = '';
     }
 }

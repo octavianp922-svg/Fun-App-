@@ -6,10 +6,12 @@ class NovelUI {
         this.fullText = "";
         this.currentBg = null;
         this.charTickCounter = 0;
+        this.activeSvgs = [];
 
         this.bgLayer = document.getElementById("bg-layer");
         this.bgLayerNext = document.getElementById("bg-layer-next");
         this.bgParticles = document.getElementById("bg-particles");
+        this.sceneEnv = document.getElementById("scene-environment");
         this.charLeft = document.getElementById("character-left");
         this.charRight = document.getElementById("character-right");
         this.speakerName = document.getElementById("speaker-name");
@@ -17,6 +19,7 @@ class NovelUI {
         this.tapIndicator = document.getElementById("tap-indicator");
         this.choicesContainer = document.getElementById("choices-container");
 
+        SceneRenderer.init(this.sceneEnv);
         this.dialogueText.addEventListener("click", () => this.onDialogueTap());
     }
 
@@ -44,49 +47,66 @@ class NovelUI {
     }
 
     setBackground(bgKey) {
-        if (!bgKey || bgKey === this.currentBg) return;
+        if (!bgKey) return;
         const gradient = BACKGROUNDS[bgKey] || BACKGROUNDS.livingroom;
-        this.bgLayerNext.style.background = gradient;
-        this.bgLayerNext.style.opacity = "1";
-        setTimeout(() => {
-            this.bgLayer.style.background = gradient;
-            this.bgLayerNext.style.opacity = "0";
-        }, 800);
+        if (bgKey !== this.currentBg) {
+            this.bgLayerNext.style.background = gradient;
+            this.bgLayerNext.style.opacity = "1";
+            setTimeout(() => {
+                this.bgLayer.style.background = gradient;
+                this.bgLayerNext.style.opacity = "0";
+            }, 800);
+            SceneRenderer.render(bgKey);
+        }
         this.currentBg = bgKey;
     }
 
     spawnBgParticles() {
         this.bgParticles.innerHTML = '';
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 8; i++) {
             const p = document.createElement('div');
             p.className = 'bg-particle';
-            const size = 4 + Math.random() * 12;
+            const size = 3 + Math.random() * 8;
             p.style.width = size + 'px';
             p.style.height = size + 'px';
             p.style.left = Math.random() * 100 + '%';
-            p.style.animationDuration = (8 + Math.random() * 12) + 's';
+            p.style.animationDuration = (10 + Math.random() * 15) + 's';
             p.style.animationDelay = Math.random() * 5 + 's';
             this.bgParticles.appendChild(p);
         }
     }
 
     setCharacters(charIds, speakerId) {
+        // Stop old avatar animations
+        this.activeSvgs.forEach(svg => Avatars.stopAnimations(svg));
+        this.activeSvgs = [];
+
         const slots = [this.charLeft, this.charRight];
         slots.forEach((slot, i) => {
             slot.classList.remove('active-speaker', 'speaking');
             if (charIds[i]) {
                 const char = CHARACTERS[charIds[i]];
                 if (char) {
+                    const avatarHtml = Avatars.create(charIds[i], 110);
                     slot.innerHTML = `
-                        <div class="avatar" style="border-color: ${char.color}">${char.emoji}</div>
+                        <div class="avatar-container">${avatarHtml}</div>
                         <span class="char-name">${char.name}</span>
                     `;
                     slot.classList.add("visible");
-                    if (charIds[i] === speakerId) {
-                        slot.classList.add('active-speaker');
-                        slot.style.setProperty('--speaker-color', char.color);
-                        slot.style.setProperty('--speaker-glow', char.color + '40');
-                        setTimeout(() => slot.classList.add('speaking'), 50);
+
+                    const svg = slot.querySelector('.avatar-svg');
+                    if (svg) {
+                        Avatars.startAnimations(svg);
+                        this.activeSvgs.push(svg);
+                        if (charIds[i] === speakerId) {
+                            slot.classList.add('active-speaker');
+                            slot.style.setProperty('--speaker-color', char.color);
+                            slot.style.setProperty('--speaker-glow', char.color + '40');
+                            setTimeout(() => slot.classList.add('speaking'), 50);
+                            Avatars.setSpeaking(svg, true);
+                        } else {
+                            Avatars.setSpeaking(svg, false);
+                        }
                     }
                 } else {
                     slot.classList.remove("visible");
@@ -122,6 +142,18 @@ class NovelUI {
         this.charTickCounter = 0;
         clearInterval(this.typewriterTimer);
 
+        // Stop speaking animation on all avatars initially, then start on speaker
+        this.activeSvgs.forEach(svg => Avatars.setSpeaking(svg, false));
+        const scene = this.engine.getCurrentScene();
+        if (scene && scene.speaker) {
+            const chars = scene.characters || [];
+            const speakerIdx = chars.indexOf(scene.speaker);
+            if (speakerIdx >= 0 && speakerIdx < 2) {
+                const svg = this.activeSvgs[speakerIdx];
+                if (svg) Avatars.setSpeaking(svg, true);
+            }
+        }
+
         let i = 0;
         this.typewriterTimer = setInterval(() => {
             if (i < text.length) {
@@ -134,6 +166,8 @@ class NovelUI {
             } else {
                 clearInterval(this.typewriterTimer);
                 this.typewriterDone = true;
+                // Stop speaking when done
+                this.activeSvgs.forEach(svg => Avatars.setSpeaking(svg, false));
                 this.onTypewriterComplete();
             }
         }, 22);
@@ -143,6 +177,7 @@ class NovelUI {
         clearInterval(this.typewriterTimer);
         this.dialogueText.textContent = this.fullText;
         this.typewriterDone = true;
+        this.activeSvgs.forEach(svg => Avatars.setSpeaking(svg, false));
         SoundManager.tap();
         this.onTypewriterComplete();
     }
@@ -208,6 +243,12 @@ class NovelUI {
 
     reset() {
         clearInterval(this.typewriterTimer);
+        this.activeSvgs.forEach(svg => {
+            Avatars.stopAnimations(svg);
+            Avatars.setSpeaking(svg, false);
+        });
+        this.activeSvgs = [];
+        SceneRenderer.cleanup();
         this.currentBg = null;
         this.dialogueText.textContent = "";
         this.choicesContainer.innerHTML = "";

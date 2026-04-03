@@ -1,16 +1,16 @@
-const CACHE_NAME = 'vitalife-v1';
+const CACHE_NAME = 'vitalife-v2';
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/css/style.css',
-    '/js/storage.js',
-    '/js/profile.js',
-    '/js/habits.js',
-    '/js/documents.js',
-    '/js/ai.js',
-    '/js/app.js',
-    '/manifest.json',
-    '/assets/icon.svg'
+    './',
+    './index.html',
+    './css/style.css',
+    './js/storage.js',
+    './js/profile.js',
+    './js/habits.js',
+    './js/documents.js',
+    './js/ai.js',
+    './js/app.js',
+    './manifest.json',
+    './assets/icon.svg'
 ];
 
 self.addEventListener('install', (e) => {
@@ -33,7 +33,6 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-    // Skip non-GET and API requests
     if (e.request.method !== 'GET' || e.request.url.includes('api.openai.com')) {
         return;
     }
@@ -48,6 +47,6 @@ self.addEventListener('fetch', (e) => {
                 }
                 return response;
             });
-        }).catch(() => caches.match('/index.html'))
+        }).catch(() => caches.match('./index.html'))
     );
 });

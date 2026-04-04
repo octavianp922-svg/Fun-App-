@@ -2,65 +2,244 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Povestiri de Familie">
-    <meta name="theme-color" content="#1a1a2e">
-    <title>Povestiri de Familie</title>
+    <title>VitaLife - AI Health Advisor</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/menu.css">
-    <link rel="stylesheet" href="css/novel.css">
-    <link rel="stylesheet" href="css/transitions.css">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Ecran: Meniu Principal -->
-    <div id="screen-menu" class="screen active">
-        <div class="menu-container">
-            <h1 class="game-title">Povestiri de Familie</h1>
-            <p class="game-subtitle">Un joc cu alegeri, haos si mult umor</p>
-            <div class="episode-grid" id="episode-grid"></div>
+    <!-- Splash -->
+    <div id="splash" class="splash">
+        <div class="splash-content">
+            <div class="splash-icon">🌿</div>
+            <h1>VitaLife</h1>
+            <p>AI-ul tău personal de sănătate</p>
+            <div class="loader"></div>
         </div>
     </div>
 
-    <!-- Ecran: Joc Visual Novel -->
-    <div id="screen-game" class="screen">
-        <div id="game-container">
-            <div id="bg-layer"></div>
-            <div id="bg-layer-next"></div>
-            <div id="characters-layer">
-                <div id="character-left" class="character-portrait"></div>
-                <div id="character-right" class="character-portrait"></div>
+    <!-- App -->
+    <div id="app" class="app hidden">
+        <!-- Header -->
+        <header class="header">
+            <button id="menu-btn" class="icon-btn">☰</button>
+            <h1 id="page-title">VitaLife</h1>
+            <button id="settings-btn" class="icon-btn">⚙️</button>
+        </header>
+
+        <!-- Side Menu -->
+        <div id="side-menu" class="side-menu hidden">
+            <div class="menu-overlay" id="menu-overlay"></div>
+            <div class="menu-panel">
+                <div class="menu-header">
+                    <div class="menu-logo">🌿</div>
+                    <h2>VitaLife</h2>
+                </div>
+                <nav class="menu-nav">
+                    <button class="menu-item active" data-page="chat">
+                        <span>🤖</span> Conversație AI
+                    </button>
+                    <button class="menu-item" data-page="plan">
+                        <span>📋</span> Planul Meu
+                    </button>
+                    <button class="menu-item" data-page="documents">
+                        <span>📄</span> Documente Medicale
+                    </button>
+                    <button class="menu-item" data-page="health-data">
+                        <span>⌚</span> Date Apple Health
+                    </button>
+                    <button class="menu-item" data-page="settings">
+                        <span>⚙️</span> Setări
+                    </button>
+                </nav>
+                <div class="menu-footer">
+                    <p>Toate datele sunt stocate local pe telefonul tău.</p>
+                </div>
             </div>
-            <div id="dialogue-box">
-                <div id="speaker-name"></div>
-                <div id="dialogue-text"></div>
-                <div id="tap-indicator">Apasa pentru a continua...</div>
-                <div id="choices-container"></div>
+        </div>
+
+        <!-- Pages -->
+        <main class="main-content">
+
+            <!-- AI Chat - Main Screen -->
+            <section id="page-chat" class="page active">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages"></div>
+
+                    <div class="chat-actions" id="chat-actions"></div>
+
+                    <div class="chat-input-area">
+                        <button id="attach-btn" class="icon-btn attach-btn">📎</button>
+                        <textarea id="chat-input" placeholder="Scrie aici..." rows="1"></textarea>
+                        <button id="chat-send" class="send-btn">➤</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weekly Plan -->
+            <section id="page-plan" class="page">
+                <div id="plan-empty" class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h3>Niciun plan generat încă</h3>
+                    <p>Vorbește cu AI-ul, urcă-ți documentele medicale, și cere-i să-ți creeze planul săptămânal.</p>
+                    <button class="btn btn-primary" id="go-to-chat">🤖 Începe conversația</button>
+                </div>
+                <div id="plan-content" class="plan-content hidden">
+                    <div class="plan-header">
+                        <h2>Planul Meu Săptămânal</h2>
+                        <p class="plan-date" id="plan-date"></p>
+                    </div>
+                    <div class="plan-days" id="plan-days"></div>
+                    <div class="plan-actions">
+                        <button class="btn btn-small" id="regenerate-plan">🔄 Regenerează planul</button>
+                        <button class="btn btn-small" id="export-plan">📥 Exportă PDF</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Documents -->
+            <section id="page-documents" class="page">
+                <div class="section-intro">
+                    <h2>Documente Medicale</h2>
+                    <p>Urcă analize, raporturi medicale, rețete. AI-ul le va analiza și va ține cont de ele în recomandări.</p>
+                </div>
+
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📄</div>
+                    <p>Apasă pentru a încărca documente</p>
+                    <p class="upload-hint">PDF, imagini, text</p>
+                    <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" hidden>
+                </div>
+
+                <div class="documents-list" id="documents-list">
+                    <p class="empty-hint">Niciun document încărcat</p>
+                </div>
+            </section>
+
+            <!-- Apple Health Data -->
+            <section id="page-health-data" class="page">
+                <div class="section-intro">
+                    <h2>Date Apple Health</h2>
+                    <p>Exportă datele din aplicația Health de pe iPhone și urcă-le aici. AI-ul va analiza somnul, activitatea, ritmul cardiac și alte date de la Apple Watch.</p>
+                </div>
+
+                <div class="health-export-guide">
+                    <h3>Cum exporti datele:</h3>
+                    <ol>
+                        <li>Deschide aplicația <strong>Health</strong> pe iPhone</li>
+                        <li>Apasă pe poza ta de profil (dreapta sus)</li>
+                        <li>Scroll jos → <strong>Export All Health Data</strong></li>
+                        <li>Salvează fișierul ZIP</li>
+                        <li>Urcă-l aici ↓</li>
+                    </ol>
+                </div>
+
+                <div class="upload-area" id="health-upload-area">
+                    <div class="upload-icon">⌚</div>
+                    <p>Urcă export.zip din Health</p>
+                    <input type="file" id="health-file-input" accept=".zip,.xml" hidden>
+                </div>
+
+                <div id="health-summary" class="health-summary hidden">
+                    <h3>📊 Rezumat date Health</h3>
+                    <div id="health-stats"></div>
+                </div>
+            </section>
+
+            <!-- Settings -->
+            <section id="page-settings" class="page">
+                <div class="section-intro">
+                    <h2>Setări</h2>
+                </div>
+
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <label for="api-key">OpenAI API Key</label>
+                        <div class="setting-input-row">
+                            <input type="password" id="api-key" placeholder="sk-...">
+                            <button id="save-api-key" class="btn btn-small">Salvează</button>
+                        </div>
+                        <p class="setting-hint">Cheia este stocată doar local pe telefonul tău. Ai nevoie de un cont pe platform.openai.com</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="ai-model">Model AI</label>
+                        <select id="ai-model">
+                            <option value="gpt-4o-mini">GPT-4o Mini (rapid, ieftin)</option>
+                            <option value="gpt-4o">GPT-4o (avansat)</option>
+                            <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                            <option value="gpt-4.1">GPT-4.1 (avansat)</option>
+                            <option value="gpt-5.4">GPT-5.4 (cel mai avansat)</option>
+                            <option value="o3">o3 (reasoning)</option>
+                            <option value="o4-mini">o4-mini (reasoning rapid)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>Date aplicație</label>
+                        <button id="export-data" class="btn btn-small">📥 Exportă backup</button>
+                        <button id="import-data" class="btn btn-small">📤 Importă backup</button>
+                        <input type="file" id="import-file" accept=".json" hidden>
+                        <button id="clear-chat" class="btn btn-small btn-danger">🗑️ Șterge conversația</button>
+                        <button id="clear-all" class="btn btn-small btn-danger">⚠️ Resetează tot</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Nav (simplified) -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-page="chat">
+                <span class="nav-icon">🤖</span>
+                <span class="nav-label">AI Chat</span>
+            </button>
+            <button class="nav-item" data-page="plan">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Planul Meu</span>
+            </button>
+            <button class="nav-item" data-page="documents">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">Documente</span>
+            </button>
+            <button class="nav-item" data-page="health-data">
+                <span class="nav-icon">⌚</span>
+                <span class="nav-label">Health</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Document View Modal -->
+    <div id="doc-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="doc-modal-title">Document</h3>
+                <button class="modal-close" data-close="doc-modal">&times;</button>
             </div>
-            <button id="btn-menu" class="btn-overlay" aria-label="Inapoi la meniu">&#9776;</button>
+            <div id="doc-modal-body"></div>
         </div>
     </div>
 
-    <!-- Ecran: Final Episod -->
-    <div id="screen-ending" class="screen">
-        <div class="ending-container">
-            <div id="ending-badge">&#127942;</div>
-            <h2 id="ending-title"></h2>
-            <p id="ending-description"></p>
-            <div class="ending-buttons">
-                <button id="btn-replay" class="btn-primary">Joaca din nou</button>
-                <button id="btn-back-menu" class="btn-secondary">Inapoi la meniu</button>
-            </div>
-        </div>
-    </div>
+    <!-- File picker for chat attach -->
+    <input type="file" id="chat-file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" hidden>
 
-    <script src="js/characters.js"></script>
-    <script src="js/engine.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/save.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/documents.js"></script>
+    <script src="js/health-import.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/plan.js"></script>
     <script src="js/app.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('SW ok'))
+            .catch(e => console.log('SW err:', e));
+    }
+    </script>
 </body>
 </html>

@@ -1,23 +1,27 @@
-// ===== VitaLife - Main App =====
+// ===== VitaLife v2 - Main App =====
 
 class App {
     constructor() {
-        this.currentPage = 'dashboard';
-        this.goals = { water: 8, steps: 10000, sleep: 8, exercise: 30 };
+        this.currentPage = 'chat';
+        this.pendingAttachments = [];
     }
 
     async init() {
         try {
             await storage.init();
-            await this.loadSettings();
-            await profileManager.load();
-            await habitsManager.loadDay(new Date());
             await documentsManager.load();
+            await planManager.load();
+            await healthImporter.loadSaved();
+
+            const history = await aiAdvisor.loadHistory();
+            this.restoreChatUI(history);
 
             this.bindEvents();
-            this.updateDashboard();
-            this.updateHabitsUI();
-            documentsManager.renderList();
+
+            // Show welcome if first time
+            if (!history || history.length === 0) {
+                this.showWelcome();
+            }
 
             // Hide splash
             setTimeout(() => {
@@ -26,36 +30,46 @@ class App {
                 setTimeout(() => {
                     document.getElementById('splash').style.display = 'none';
                 }, 500);
-            }, 800);
+            }, 600);
 
         } catch (err) {
             console.error('Init error:', err);
-            document.getElementById('splash').innerHTML = `
-                <div class="splash-content">
-                    <div class="splash-icon">⚠️</div>
-                    <h1>Eroare</h1>
-                    <p>Nu s-a putut inițializa aplicația. Reîncarcă pagina.</p>
-                </div>
-            `;
         }
     }
 
-    async loadSettings() {
-        const settings = await storage.get(STORES.SETTINGS, 'main');
-        if (settings) {
-            this.goals = {
-                water: settings.goalWater || 8,
-                steps: settings.goalSteps || 10000,
-                sleep: settings.goalSleep || 8,
-                exercise: settings.goalExercise || 30
-            };
-            if (settings.model) {
-                document.getElementById('ai-model').value = settings.model;
+    showWelcome() {
+        aiAdvisor.addBotMessage(
+            `Bună! Sunt **VitaLife AI** — asistentul tău personal de sănătate. 🌿\n\n` +
+            `Scopul meu e să te cunosc cât mai bine și să-ți creez un **plan complet de viață sănătoasă** — personalizat pe tine.\n\n` +
+            `Poți să:\n` +
+            `- **Vorbești cu mine** — îți pun întrebări despre sănătate, obiceiuri, alimentație\n` +
+            `- **Urci documente medicale** (analize, raporturi) — le analizez\n` +
+            `- **Importi date de la Apple Watch** — somn, pași, ritm cardiac\n\n` +
+            `Când am suficiente informații, îți generez un **plan săptămânal detaliat**: ce să mănânci, când să dormi, ce sport, câtă apă — tot.\n\n` +
+            `Hai să începem! Spune-mi, cum te cheamă și câți ani ai? 😊`
+        );
+
+        aiAdvisor.showActions([
+            { label: '📄 Urcă analize medicale', callback: () => this.navigate('documents') },
+            { label: '⌚ Import Apple Health', callback: () => this.navigate('health-data') },
+            { label: '💬 Hai să vorbim!', message: 'Salut! Hai să începem.' }
+        ]);
+    }
+
+    restoreChatUI(history) {
+        if (!history || history.length === 0) return;
+        for (const msg of history) {
+            if (msg.role === 'user') {
+                aiAdvisor.addUserMessage(msg.content);
+            } else if (msg.role === 'assistant') {
+                aiAdvisor.addBotMessage(msg.content);
+
+                // Check if plan was generated
+                const plan = aiAdvisor.extractPlan(msg.content);
+                if (plan) {
+                    planManager.save(plan);
+                }
             }
-            document.getElementById('goal-water').value = this.goals.water;
-            document.getElementById('goal-steps').value = this.goals.steps;
-            document.getElementById('goal-sleep').value = this.goals.sleep;
-            document.getElementById('goal-exercise').value = this.goals.exercise;
         }
     }
 
@@ -64,188 +78,86 @@ class App {
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', () => this.navigate(btn.dataset.page));
         });
-
-        // Settings button
-        document.getElementById('settings-btn').addEventListener('click', () => {
-            this.navigate('settings');
-        });
-
-        // Profile form
-        document.getElementById('profile-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = profileManager.getFormData();
-            await profileManager.save(data);
-            this.showToast('Profil salvat!', 'success');
-            this.updateDashboard();
-        });
-
-        // Profile tags
-        this.bindTagEvents('add-condition', 'condition-input', 'conditions', 'conditions-list');
-        this.bindTagEvents('add-allergy', 'allergy-input', 'allergies', 'allergies-list');
-        this.bindTagEvents('add-med', 'med-input', 'medications', 'meds-list');
-
-        // Tag removal (delegated)
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('tag-remove')) {
-                const type = e.target.dataset.type;
-                const value = e.target.dataset.value;
-                profileManager.removeTag(type, value);
-                const listId = type === 'medications' ? 'meds-list' :
-                              type === 'conditions' ? 'conditions-list' : 'allergies-list';
-                profileManager.renderTags(listId, profileManager.profile[type], type);
-            }
-        });
-
-        // Dashboard quick stats
-        document.querySelectorAll('.stat-add').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const action = btn.dataset.action;
-                if (action === 'add-water') {
-                    await habitsManager.addWater(1);
-                    this.updateDashboard();
-                    this.updateHabitsUI();
-                } else if (action === 'add-steps') {
-                    const steps = prompt('Câți pași?');
-                    if (steps && !isNaN(steps)) {
-                        await habitsManager.setSteps(parseInt(steps));
-                        this.updateDashboard();
-                        this.updateHabitsUI();
-                    }
-                } else if (action === 'add-sleep') {
-                    const sleep = prompt('Câte ore ai dormit?');
-                    if (sleep && !isNaN(sleep)) {
-                        await habitsManager.setSleep(parseFloat(sleep));
-                        this.updateDashboard();
-                        this.updateHabitsUI();
-                    }
-                } else if (action === 'add-mood') {
-                    this.navigate('habits');
-                }
+        document.querySelectorAll('.menu-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.navigate(btn.dataset.page);
+                this.closeMenu();
             });
         });
 
-        // Habits controls
-        document.querySelectorAll('.habit-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const habit = btn.dataset.habit;
-                const action = btn.dataset.action;
-                if (habit === 'water') {
-                    await habitsManager.addWater(action === 'add' ? 1 : -1);
-                    this.updateHabitsUI();
-                    this.updateDashboard();
-                }
-            });
-        });
+        // Menu
+        document.getElementById('menu-btn').addEventListener('click', () => this.openMenu());
+        document.getElementById('menu-overlay').addEventListener('click', () => this.closeMenu());
+        document.getElementById('settings-btn').addEventListener('click', () => this.navigate('settings'));
 
-        document.querySelectorAll('.habit-btn-save').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const habit = btn.dataset.habit;
-                if (habit === 'steps') {
-                    const val = parseInt(document.getElementById('steps-input').value);
-                    if (!isNaN(val)) {
-                        await habitsManager.setSteps(val);
-                        document.getElementById('steps-input').value = '';
-                    }
-                } else if (habit === 'sleep') {
-                    const val = parseFloat(document.getElementById('sleep-input').value);
-                    if (!isNaN(val)) {
-                        await habitsManager.setSleep(val);
-                        document.getElementById('sleep-input').value = '';
-                    }
-                } else if (habit === 'exercise') {
-                    const min = parseInt(document.getElementById('exercise-input').value);
-                    const type = document.getElementById('exercise-type').value;
-                    if (!isNaN(min) && min > 0) {
-                        await habitsManager.addExercise(min, type);
-                        document.getElementById('exercise-input').value = '';
-                    }
-                }
-                this.updateHabitsUI();
-                this.updateDashboard();
-                this.showToast('Salvat!', 'success');
-            });
-        });
-
-        // Mood buttons
-        document.querySelectorAll('.mood-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                await habitsManager.setMood(parseInt(btn.dataset.mood));
-                this.updateDashboard();
-                this.showToast('Dispoziție salvată!', 'success');
-            });
-        });
-
-        // Date navigation
-        document.getElementById('prev-day').addEventListener('click', async () => {
-            if (habitsManager.navigateDay(-1)) {
-                await habitsManager.loadDay(habitsManager.currentDate);
-                this.updateHabitsUI();
+        // Chat
+        document.getElementById('chat-send').addEventListener('click', () => this.sendChat());
+        document.getElementById('chat-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendChat();
             }
         });
-        document.getElementById('next-day').addEventListener('click', async () => {
-            if (habitsManager.navigateDay(1)) {
-                await habitsManager.loadDay(habitsManager.currentDate);
-                this.updateHabitsUI();
-            }
+        document.getElementById('chat-input').addEventListener('input', (e) => {
+            e.target.style.height = 'auto';
+            e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
         });
 
-        // Meals
-        document.getElementById('add-meal-btn').addEventListener('click', () => {
-            document.getElementById('meal-modal').classList.remove('hidden');
+        // Chat attach
+        document.getElementById('attach-btn').addEventListener('click', () => {
+            document.getElementById('chat-file-input').click();
         });
-        document.getElementById('meal-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const type = document.getElementById('meal-type').value;
-            const desc = document.getElementById('meal-desc').value.trim();
-            if (desc) {
-                await habitsManager.addMeal(type, desc);
-                document.getElementById('meal-desc').value = '';
-                document.getElementById('meal-modal').classList.add('hidden');
-                this.updateHabitsUI();
-                this.showToast('Masă adăugată!', 'success');
+        document.getElementById('chat-file-input').addEventListener('change', async (e) => {
+            for (const file of e.target.files) {
+                const doc = await documentsManager.addDocument(file);
+                this.pendingAttachments.push({
+                    name: file.name,
+                    textContent: doc.textContent || `[Document medical: ${file.name}]`
+                });
+                this.showToast(`📎 ${file.name} atașat`, 'success');
             }
+            e.target.value = '';
+            documentsManager.renderList();
         });
 
         // Documents
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
-
         uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('drag-over');
-        });
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('drag-over');
-        });
-        uploadArea.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('drag-over');
-            await this.handleFiles(e.dataTransfer.files);
-        });
-        fileInput.addEventListener('change', async () => {
-            await this.handleFiles(fileInput.files);
-            fileInput.value = '';
+        fileInput.addEventListener('change', async (e) => {
+            for (const file of e.target.files) {
+                await documentsManager.addDocument(file);
+                this.showToast(`${file.name} încărcat!`, 'success');
+            }
+            e.target.value = '';
+            documentsManager.renderList();
         });
 
-        // Document actions (delegated)
+        // Document actions
         document.getElementById('documents-list').addEventListener('click', async (e) => {
+            const sendBtn = e.target.closest('.doc-send');
             const viewBtn = e.target.closest('.doc-view');
             const deleteBtn = e.target.closest('.doc-delete');
-            if (viewBtn) {
+
+            if (sendBtn) {
+                const doc = documentsManager.getDocForChat(parseInt(sendBtn.dataset.docId));
+                if (doc) {
+                    this.navigate('chat');
+                    this.pendingAttachments.push(doc);
+                    document.getElementById('chat-input').value = `Am urcat documentul "${doc.name}". Te rog analizează-l.`;
+                    this.sendChat();
+                }
+            } else if (viewBtn) {
                 documentsManager.viewDocument(parseInt(viewBtn.dataset.docId));
             } else if (deleteBtn) {
-                if (confirm('Ești sigur că vrei să ștergi acest document?')) {
+                if (confirm('Ștergi documentul?')) {
                     await documentsManager.removeDocument(parseInt(deleteBtn.dataset.docId));
                     documentsManager.renderList();
-                    this.showToast('Document șters', 'success');
                 }
             }
         });
 
-        // Modals close
+        // Modal close
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.getElementById(btn.dataset.close).classList.add('hidden');
@@ -257,32 +169,56 @@ class App {
             });
         });
 
-        // AI Chat
-        const chatInput = document.getElementById('chat-input');
-        const chatSend = document.getElementById('chat-send');
+        // Health import
+        const healthUpload = document.getElementById('health-upload-area');
+        const healthInput = document.getElementById('health-file-input');
+        healthUpload.addEventListener('click', () => healthInput.click());
+        healthInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        chatSend.addEventListener('click', () => this.sendChat());
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendChat();
+            this.showToast('Se procesează datele...', 'info');
+            try {
+                const result = await healthImporter.processFile(file);
+                if (result.error) {
+                    this.showToast(result.message, 'error');
+                } else {
+                    healthImporter.renderStats(result);
+                    this.showToast('Date Apple Health importate!', 'success');
+
+                    // Offer to send to AI
+                    setTimeout(() => {
+                        if (confirm('Vrei să trimit datele Apple Health către AI pentru analiză?')) {
+                            this.navigate('chat');
+                            document.getElementById('chat-input').value =
+                                'Am importat datele mele din Apple Health. Iată rezumatul:\n\n' + result.rawSummary +
+                                '\n\nAnalizează aceste date și spune-mi ce observi.';
+                            this.sendChat();
+                        }
+                    }, 500);
+                }
+            } catch (err) {
+                this.showToast('Eroare: ' + err.message, 'error');
             }
-        });
-        // Auto-resize textarea
-        chatInput.addEventListener('input', () => {
-            chatInput.style.height = 'auto';
-            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+            e.target.value = '';
         });
 
-        // Quick questions
-        document.querySelectorAll('.quick-q').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.navigate('ai');
-                setTimeout(() => {
-                    document.getElementById('chat-input').value = btn.dataset.q;
-                    this.sendChat();
-                }, 300);
-            });
+        // Plan actions
+        document.getElementById('go-to-chat')?.addEventListener('click', () => this.navigate('chat'));
+        document.getElementById('regenerate-plan')?.addEventListener('click', () => {
+            this.navigate('chat');
+            document.getElementById('chat-input').value = 'Regenerează-mi planul săptămânal te rog, ținând cont de tot ce am discutat.';
+            this.sendChat();
+        });
+        document.getElementById('export-plan')?.addEventListener('click', () => {
+            const text = planManager.exportAsText();
+            if (text) {
+                const blob = new Blob([text], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'vitalife-plan.json';
+                a.click();
+            }
         });
 
         // Settings
@@ -291,40 +227,17 @@ class App {
             await this.saveSetting('apiKey', key);
             this.showToast('Cheie API salvată!', 'success');
         });
-
         document.getElementById('ai-model').addEventListener('change', async (e) => {
             await this.saveSetting('model', e.target.value);
-            this.showToast('Model AI actualizat!', 'success');
         });
-
-        document.getElementById('save-goals').addEventListener('click', async () => {
-            this.goals = {
-                water: parseInt(document.getElementById('goal-water').value) || 8,
-                steps: parseInt(document.getElementById('goal-steps').value) || 10000,
-                sleep: parseFloat(document.getElementById('goal-sleep').value) || 8,
-                exercise: parseInt(document.getElementById('goal-exercise').value) || 30
-            };
-            await this.saveSetting('goalWater', this.goals.water);
-            await this.saveSetting('goalSteps', this.goals.steps);
-            await this.saveSetting('goalSleep', this.goals.sleep);
-            await this.saveSetting('goalExercise', this.goals.exercise);
-            this.updateHabitsUI();
-            this.updateDashboard();
-            this.showToast('Obiective salvate!', 'success');
-        });
-
         document.getElementById('export-data').addEventListener('click', async () => {
             const data = await storage.exportAll();
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
+            a.href = URL.createObjectURL(blob);
             a.download = `vitalife-backup-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
-            URL.revokeObjectURL(url);
-            this.showToast('Date exportate!', 'success');
         });
-
         document.getElementById('import-data').addEventListener('click', () => {
             document.getElementById('import-file').click();
         });
@@ -332,259 +245,135 @@ class App {
             const file = e.target.files[0];
             if (!file) return;
             try {
-                const text = await file.text();
-                const data = JSON.parse(text);
+                const data = JSON.parse(await file.text());
                 await storage.importAll(data);
-                await profileManager.load();
-                profileManager.populateForm();
-                await habitsManager.loadDay(new Date());
-                this.updateDashboard();
-                this.updateHabitsUI();
-                await documentsManager.load();
-                documentsManager.renderList();
-                this.showToast('Date importate cu succes!', 'success');
+                location.reload();
             } catch (err) {
-                this.showToast('Eroare la import: fișier invalid', 'error');
+                this.showToast('Fișier invalid', 'error');
             }
         });
-
-        document.getElementById('clear-data').addEventListener('click', async () => {
-            if (confirm('Ești sigur? Toate datele vor fi șterse permanent!')) {
+        document.getElementById('clear-chat').addEventListener('click', async () => {
+            if (confirm('Ștergi toată conversația?')) {
+                await aiAdvisor.clearHistory();
+                document.getElementById('chat-messages').innerHTML = '';
+                this.showWelcome();
+                this.showToast('Conversație ștearsă', 'success');
+            }
+        });
+        document.getElementById('clear-all').addEventListener('click', async () => {
+            if (confirm('⚠️ Ești sigur? TOTUL va fi șters — conversație, documente, plan, setări!')) {
                 await storage.clearAll();
                 location.reload();
             }
         });
+
+        // Load saved API key into field
+        this.loadSettingsUI();
     }
 
-    bindTagEvents(btnId, inputId, type, listId) {
-        const btn = document.getElementById(btnId);
-        const input = document.getElementById(inputId);
-
-        const addTag = () => {
-            const val = input.value.trim();
-            if (val) {
-                profileManager.addTag(type, val);
-                profileManager.renderTags(listId, profileManager.profile[type], type);
-                input.value = '';
-            }
-        };
-
-        btn.addEventListener('click', addTag);
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag();
-            }
-        });
+    async loadSettingsUI() {
+        const s = await storage.get(STORES.SETTINGS, 'main');
+        if (s?.apiKey) {
+            document.getElementById('api-key').value = s.apiKey;
+        }
+        if (s?.model) {
+            document.getElementById('ai-model').value = s.model;
+        }
     }
 
     navigate(page) {
         this.currentPage = page;
-
-        // Update pages
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(`page-${page}`).classList.add('active');
 
-        // Update nav
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const navBtn = document.querySelector(`.nav-item[data-page="${page}"]`);
         if (navBtn) navBtn.classList.add('active');
 
-        // Update header
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        const menuBtn = document.querySelector(`.menu-item[data-page="${page}"]`);
+        if (menuBtn) menuBtn.classList.add('active');
+
         const titles = {
-            dashboard: 'VitaLife',
-            profile: 'Profilul Meu',
-            habits: 'Obiceiuri',
+            chat: 'VitaLife AI',
+            plan: 'Planul Meu',
             documents: 'Documente',
-            ai: 'AI Advisor',
+            'health-data': 'Apple Health',
             settings: 'Setări'
         };
         document.getElementById('page-title').textContent = titles[page] || 'VitaLife';
 
-        // Populate profile form when navigating to profile
-        if (page === 'profile') {
-            profileManager.populateForm();
-        }
+        if (page === 'documents') documentsManager.renderList();
 
-        // Scroll to top
-        window.scrollTo(0, 0);
+        // Scroll chat to bottom
+        if (page === 'chat') {
+            setTimeout(() => {
+                const msgs = document.getElementById('chat-messages');
+                msgs.scrollTop = msgs.scrollHeight;
+            }, 100);
+        }
     }
 
-    updateDashboard() {
-        // Greeting
-        const name = profileManager.profile?.name;
-        const hour = new Date().getHours();
-        let greeting = hour < 12 ? 'Bună dimineața' : hour < 18 ? 'Bună ziua' : 'Bună seara';
-        if (name) greeting += `, <span>${name}</span>`;
-        greeting += '! 👋';
-        document.getElementById('greeting').innerHTML = greeting;
-
-        // Quick stats
-        const habits = habitsManager.todayData;
-        if (habits) {
-            document.getElementById('stat-water').textContent = habits.water || 0;
-            document.getElementById('stat-steps').textContent = (habits.steps || 0).toLocaleString();
-            document.getElementById('stat-sleep').textContent = habits.sleep || '--';
-            const moods = ['--', '😢', '😕', '😐', '😊', '😄'];
-            document.getElementById('stat-mood').textContent = moods[habits.mood || 0];
-        }
-
-        // Health score
-        const score = profileManager.calculateHealthScore(habits, this.goals);
-        const scoreValue = document.getElementById('score-value');
-        const scoreCircle = document.getElementById('score-circle');
-        const scoreMessage = document.getElementById('score-message');
-
-        scoreValue.textContent = score;
-        const circumference = 339.292;
-        const offset = circumference - (score / 100) * circumference;
-        scoreCircle.style.strokeDashoffset = offset;
-
-        if (score >= 80) scoreMessage.textContent = 'Excelent! Continuă așa! 🌟';
-        else if (score >= 60) scoreMessage.textContent = 'Bine! Mai ai puțin până la excelent! 💪';
-        else if (score >= 40) scoreMessage.textContent = 'Nu rău! Hai să îmbunătățim! 🌿';
-        else scoreMessage.textContent = 'Completează-ți obiceiurile zilnice! 📝';
-
-        // Daily tip
-        this.updateDailyTip();
+    openMenu() {
+        document.getElementById('side-menu').classList.remove('hidden');
     }
-
-    updateDailyTip() {
-        const tips = [
-            'Bea un pahar de apă dimineața pe stomacul gol pentru a-ți activa metabolismul.',
-            'Încearcă să faci o plimbare de 10 minute după fiecare masă principală.',
-            'Limitează ecranele cu 1 oră înainte de culcare pentru un somn mai bun.',
-            'Mănâncă lent și savurează fiecare îmbucătură - durează 20 min ca creierul să simtă sațietatea.',
-            'Adaugă o porție de legume la fiecare masă pentru mai multe fibre și vitamine.',
-            'Respirația profundă 5 minute pe zi reduce stresul și tensiunea arterială.',
-            'Încearcă să te ridici și să te miști la fiecare oră dacă lucrezi la birou.',
-            'Un fruct pe zi aduce vitamine esențiale și energie naturală.',
-            'Somnul regulat (culcare/trezire la aceeași oră) îmbunătățește calitatea odihnei.',
-            'Hidratarea corectă ajută la concentrare, energie și digestie.',
-            'Stretching-ul de 5 minute dimineața îți pregătește corpul pentru zi.',
-            'Încearcă să mănânci ultima masă cu cel puțin 2-3 ore înainte de culcare.',
-            'Zâmbește! Studiile arată că zâmbetul reduce hormonii de stres.',
-            'Adaugă nuci și semințe în alimentație pentru grăsimi sănătoase.',
-            'Limitează zahărul adăugat - corpul tău îți va mulțumi!'
-        ];
-        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-        document.getElementById('tip-text').textContent = tips[dayOfYear % tips.length];
-    }
-
-    updateHabitsUI() {
-        const data = habitsManager.todayData;
-        if (!data) return;
-
-        // Date
-        document.getElementById('current-date').textContent = habitsManager.formatDate();
-
-        // Water
-        document.getElementById('habit-water-val').textContent = data.water || 0;
-        document.getElementById('habit-water-count').textContent = `${data.water || 0} / ${this.goals.water} pahare`;
-        document.getElementById('water-progress').style.width = `${Math.min(((data.water || 0) / this.goals.water) * 100, 100)}%`;
-
-        // Steps
-        document.getElementById('habit-steps-count').textContent = `${(data.steps || 0).toLocaleString()} / ${this.goals.steps.toLocaleString()}`;
-        document.getElementById('steps-progress').style.width = `${Math.min(((data.steps || 0) / this.goals.steps) * 100, 100)}%`;
-
-        // Sleep
-        document.getElementById('habit-sleep-count').textContent = `${data.sleep || '--'} ore`;
-        document.getElementById('sleep-progress').style.width = `${Math.min(((data.sleep || 0) / this.goals.sleep) * 100, 100)}%`;
-
-        // Exercise
-        document.getElementById('habit-exercise-count').textContent = `${data.exercise || 0} min`;
-
-        // Meals
-        const mealLabels = {
-            breakfast: 'Mic dejun',
-            lunch: 'Prânz',
-            dinner: 'Cină',
-            snack: 'Gustare'
-        };
-        const mealsList = document.getElementById('meals-list');
-        if (data.meals && data.meals.length > 0) {
-            document.getElementById('habit-meals-count').textContent = `${data.meals.length} / 3`;
-            mealsList.innerHTML = data.meals.map(m => `
-                <div class="meal-item">
-                    <div>
-                        <div class="meal-type">${mealLabels[m.type] || m.type}</div>
-                        <div>${m.description}</div>
-                    </div>
-                    <button class="meal-delete" data-meal-id="${m.id}">✕</button>
-                </div>
-            `).join('');
-
-            // Bind delete
-            mealsList.querySelectorAll('.meal-delete').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    await habitsManager.removeMeal(parseInt(btn.dataset.mealId));
-                    this.updateHabitsUI();
-                });
-            });
-        } else {
-            document.getElementById('habit-meals-count').textContent = '0 / 3';
-            mealsList.innerHTML = '';
-        }
-
-        // Mood
-        document.querySelectorAll('.mood-btn').forEach(btn => {
-            btn.classList.toggle('active', parseInt(btn.dataset.mood) === data.mood);
-        });
-    }
-
-    async handleFiles(files) {
-        for (const file of files) {
-            try {
-                await documentsManager.addDocument(file);
-                this.showToast(`${file.name} încărcat!`, 'success');
-            } catch (err) {
-                this.showToast(`Eroare la ${file.name}`, 'error');
-            }
-        }
-        documentsManager.renderList();
+    closeMenu() {
+        document.getElementById('side-menu').classList.add('hidden');
     }
 
     async sendChat() {
         const input = document.getElementById('chat-input');
-        const message = input.value.trim();
-        if (!message || aiAdvisor.isProcessing) return;
+        const msg = input.value.trim();
+        if (!msg || aiAdvisor.isProcessing) return;
 
         input.value = '';
         input.style.height = 'auto';
 
-        aiAdvisor.addMessageToUI(message, true);
+        const attachments = [...this.pendingAttachments];
+        this.pendingAttachments = [];
+
+        aiAdvisor.clearActions();
+        aiAdvisor.addUserMessage(msg, attachments);
         aiAdvisor.showTyping();
 
-        const result = await aiAdvisor.sendMessage(message);
+        const result = await aiAdvisor.sendMessage(msg, attachments);
         aiAdvisor.hideTyping();
 
         if (result.success) {
-            aiAdvisor.addMessageToUI(result.message, false);
+            // Check for plan
+            const plan = aiAdvisor.extractPlan(result.message);
+            if (plan) {
+                await planManager.save(plan);
+            }
+
+            aiAdvisor.addBotMessage(result.message);
+
+            // Show contextual actions after response
+            if (plan) {
+                aiAdvisor.showActions([
+                    { label: '📋 Vezi planul', callback: () => this.navigate('plan') },
+                    { label: '🔄 Modifică planul', message: 'Poți să modifici planul? Aș vrea câteva schimbări.' }
+                ]);
+            }
         } else {
-            aiAdvisor.addMessageToUI('⚠️ ' + result.message, false);
+            aiAdvisor.addBotMessage(result.message);
         }
     }
 
     async saveSetting(key, value) {
-        let settings = await storage.get(STORES.SETTINGS, 'main');
-        if (!settings) settings = { id: 'main' };
-        settings[key] = value;
-        await storage.put(STORES.SETTINGS, settings);
+        let s = await storage.get(STORES.SETTINGS, 'main');
+        if (!s) s = { id: 'main' };
+        s[key] = value;
+        await storage.put(STORES.SETTINGS, s);
     }
 
     showToast(message, type = '') {
-        // Remove existing toasts
         document.querySelectorAll('.toast').forEach(t => t.remove());
-
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
         document.body.appendChild(toast);
-
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-
+        requestAnimationFrame(() => toast.classList.add('show'));
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
@@ -592,6 +381,5 @@ class App {
     }
 }
 
-// Start the app
 const app = new App();
 document.addEventListener('DOMContentLoaded', () => app.init());

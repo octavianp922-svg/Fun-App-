@@ -1,4 +1,4 @@
-// ===== VitaLife - Documents Manager =====
+// ===== VitaLife v2 - Documents Manager =====
 
 class DocumentsManager {
     constructor() {
@@ -21,8 +21,14 @@ class DocumentsManager {
                     size: file.size,
                     data: e.target.result,
                     uploadDate: new Date().toISOString(),
-                    notes: ''
+                    aiSummary: null,
+                    textContent: null
                 };
+
+                // Extract text if image (for AI to read later via description)
+                if (file.type.startsWith('text/')) {
+                    doc.textContent = atob(e.target.result.split(',')[1]);
+                }
 
                 try {
                     await storage.put(STORES.DOCUMENTS, doc);
@@ -33,12 +39,7 @@ class DocumentsManager {
                 }
             };
             reader.onerror = () => reject(reader.error);
-
-            if (file.type.startsWith('image/')) {
-                reader.readAsDataURL(file);
-            } else {
-                reader.readAsDataURL(file);
-            }
+            reader.readAsDataURL(file);
         });
     }
 
@@ -47,12 +48,19 @@ class DocumentsManager {
         await this.load();
     }
 
+    async updateDocSummary(id, summary) {
+        const doc = this.documents.find(d => d.id === id);
+        if (doc) {
+            doc.aiSummary = summary;
+            await storage.put(STORES.DOCUMENTS, doc);
+        }
+    }
+
     getFileIcon(type) {
-        if (type.startsWith('image/')) return '🖼️';
+        if (type?.startsWith('image/')) return '🖼️';
         if (type === 'application/pdf') return '📄';
-        if (type.includes('word') || type.includes('document')) return '📝';
-        if (type.startsWith('text/')) return '📃';
-        return '📁';
+        if (type?.includes('word')) return '📝';
+        return '📃';
     }
 
     formatSize(bytes) {
@@ -61,21 +69,10 @@ class DocumentsManager {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
-    formatDate(dateStr) {
-        return new Date(dateStr).toLocaleDateString('ro-RO', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
     renderList() {
         const container = document.getElementById('documents-list');
-
         if (this.documents.length === 0) {
-            container.innerHTML = '<p class="empty-state">Niciun document încărcat încă</p>';
+            container.innerHTML = '<p class="empty-hint">Niciun document încărcat</p>';
             return;
         }
 
@@ -84,9 +81,13 @@ class DocumentsManager {
                 <span class="doc-icon">${this.getFileIcon(doc.type)}</span>
                 <div class="doc-info">
                     <div class="doc-name">${this.escapeHtml(doc.name)}</div>
-                    <div class="doc-meta">${this.formatSize(doc.size)} • ${this.formatDate(doc.uploadDate)}</div>
+                    <div class="doc-meta">${this.formatSize(doc.size)} • ${new Date(doc.uploadDate).toLocaleDateString('ro-RO')}</div>
+                    <div class="doc-status ${doc.aiSummary ? 'analyzed' : 'pending'}">
+                        ${doc.aiSummary ? '✅ Analizat de AI' : '⏳ Trimite-l în chat pentru analiză'}
+                    </div>
                 </div>
                 <div class="doc-actions">
+                    <button class="doc-action-btn doc-send" data-doc-id="${doc.id}" title="Trimite în chat">💬</button>
                     <button class="doc-action-btn doc-view" data-doc-id="${doc.id}" title="Vizualizează">👁️</button>
                     <button class="doc-action-btn doc-delete" data-doc-id="${doc.id}" title="Șterge">🗑️</button>
                 </div>
@@ -99,30 +100,31 @@ class DocumentsManager {
         if (!doc) return;
 
         const modal = document.getElementById('doc-modal');
-        const title = document.getElementById('doc-modal-title');
+        document.getElementById('doc-modal-title').textContent = doc.name;
         const body = document.getElementById('doc-modal-body');
 
-        title.textContent = doc.name;
-
-        if (doc.type.startsWith('image/')) {
-            body.innerHTML = `<img src="${doc.data}" style="max-width:100%; border-radius: 8px;" alt="${this.escapeHtml(doc.name)}">`;
+        if (doc.type?.startsWith('image/')) {
+            body.innerHTML = `<img src="${doc.data}" style="max-width:100%; border-radius:8px;" alt="${this.escapeHtml(doc.name)}">`;
         } else if (doc.type === 'application/pdf') {
-            body.innerHTML = `<iframe src="${doc.data}" style="width:100%; height:70vh; border:none; border-radius:8px;"></iframe>`;
+            body.innerHTML = `<iframe src="${doc.data}" style="width:100%;height:70vh;border:none;border-radius:8px;"></iframe>`;
         } else {
-            body.innerHTML = `
-                <div style="padding: 20px; background: var(--bg); border-radius: 8px;">
-                    <p style="color: var(--text-muted);">Previzualizarea nu este disponibilă pentru acest tip de fișier.</p>
-                    <a href="${doc.data}" download="${this.escapeHtml(doc.name)}" class="btn btn-primary" style="margin-top: 16px;">📥 Descarcă</a>
-                </div>
-            `;
+            body.innerHTML = `<div style="padding:20px;background:var(--bg);border-radius:8px;">
+                <p style="color:var(--text-muted)">Previzualizare indisponibilă.</p>
+                <a href="${doc.data}" download="${this.escapeHtml(doc.name)}" class="btn btn-primary" style="margin-top:16px">📥 Descarcă</a>
+            </div>`;
         }
 
         modal.classList.remove('hidden');
     }
 
-    getDocumentsSummary() {
-        if (this.documents.length === 0) return '';
-        return `Documente medicale încărcate: ${this.documents.map(d => d.name).join(', ')}`;
+    getDocForChat(id) {
+        const doc = this.documents.find(d => d.id === id);
+        if (!doc) return null;
+        return {
+            name: doc.name,
+            type: doc.type,
+            textContent: doc.textContent || `[Document: ${doc.name}, tip: ${doc.type}, dimensiune: ${this.formatSize(doc.size)}. Utilizatorul a urcat acest document medical. Descrie ce observi și întreabă despre conținut.]`
+        };
     }
 
     escapeHtml(text) {

@@ -6,336 +6,156 @@
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>VitaLife - Sănătatea Ta</title>
+    <title>VitaLife - AI Health Advisor</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Splash Screen -->
+    <!-- Splash -->
     <div id="splash" class="splash">
         <div class="splash-content">
             <div class="splash-icon">🌿</div>
             <h1>VitaLife</h1>
-            <p>Sănătatea ta, în mâinile tale</p>
+            <p>AI-ul tău personal de sănătate</p>
             <div class="loader"></div>
         </div>
     </div>
 
-    <!-- Main App -->
+    <!-- App -->
     <div id="app" class="app hidden">
         <!-- Header -->
         <header class="header">
+            <button id="menu-btn" class="icon-btn">☰</button>
             <h1 id="page-title">VitaLife</h1>
-            <button id="settings-btn" class="icon-btn" aria-label="Setări">⚙️</button>
+            <button id="settings-btn" class="icon-btn">⚙️</button>
         </header>
 
+        <!-- Side Menu -->
+        <div id="side-menu" class="side-menu hidden">
+            <div class="menu-overlay" id="menu-overlay"></div>
+            <div class="menu-panel">
+                <div class="menu-header">
+                    <div class="menu-logo">🌿</div>
+                    <h2>VitaLife</h2>
+                </div>
+                <nav class="menu-nav">
+                    <button class="menu-item active" data-page="chat">
+                        <span>🤖</span> Conversație AI
+                    </button>
+                    <button class="menu-item" data-page="plan">
+                        <span>📋</span> Planul Meu
+                    </button>
+                    <button class="menu-item" data-page="documents">
+                        <span>📄</span> Documente Medicale
+                    </button>
+                    <button class="menu-item" data-page="health-data">
+                        <span>⌚</span> Date Apple Health
+                    </button>
+                    <button class="menu-item" data-page="settings">
+                        <span>⚙️</span> Setări
+                    </button>
+                </nav>
+                <div class="menu-footer">
+                    <p>Toate datele sunt stocate local pe telefonul tău.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Pages -->
-        <main id="main-content" class="main-content">
+        <main class="main-content">
 
-            <!-- Dashboard -->
-            <section id="page-dashboard" class="page active">
-                <div class="greeting" id="greeting"></div>
+            <!-- AI Chat - Main Screen -->
+            <section id="page-chat" class="page active">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages"></div>
 
-                <div class="health-score-card" id="health-score-card">
-                    <div class="score-circle">
-                        <svg viewBox="0 0 120 120">
-                            <circle cx="60" cy="60" r="54" class="score-bg"/>
-                            <circle cx="60" cy="60" r="54" class="score-fill" id="score-circle"/>
-                        </svg>
-                        <span class="score-value" id="score-value">--</span>
-                    </div>
-                    <div class="score-info">
-                        <h3>Scor Sănătate</h3>
-                        <p id="score-message">Completează-ți profilul pentru a primi scorul</p>
-                    </div>
-                </div>
+                    <div class="chat-actions" id="chat-actions"></div>
 
-                <div class="quick-stats" id="quick-stats">
-                    <div class="stat-card" data-type="water">
-                        <span class="stat-icon">💧</span>
-                        <span class="stat-value" id="stat-water">0</span>
-                        <span class="stat-label">Pahare apă</span>
-                        <button class="stat-add" data-action="add-water">+</button>
-                    </div>
-                    <div class="stat-card" data-type="steps">
-                        <span class="stat-icon">🚶</span>
-                        <span class="stat-value" id="stat-steps">0</span>
-                        <span class="stat-label">Pași</span>
-                        <button class="stat-add" data-action="add-steps">+</button>
-                    </div>
-                    <div class="stat-card" data-type="sleep">
-                        <span class="stat-icon">😴</span>
-                        <span class="stat-value" id="stat-sleep">--</span>
-                        <span class="stat-label">Ore somn</span>
-                        <button class="stat-add" data-action="add-sleep">+</button>
-                    </div>
-                    <div class="stat-card" data-type="mood">
-                        <span class="stat-icon">😊</span>
-                        <span class="stat-value" id="stat-mood">--</span>
-                        <span class="stat-label">Dispoziție</span>
-                        <button class="stat-add" data-action="add-mood">+</button>
-                    </div>
-                </div>
-
-                <div class="daily-tip" id="daily-tip">
-                    <h3>💡 Sfatul zilei</h3>
-                    <p id="tip-text">Încarcă-ți profilul pentru sfaturi personalizate!</p>
-                </div>
-
-                <div class="ai-quick" id="ai-quick">
-                    <h3>🤖 Întreabă pe VitaLife AI</h3>
-                    <div class="quick-questions">
-                        <button class="quick-q" data-q="Ce ar trebui să mănânc azi?">🍎 Ce să mănânc azi?</button>
-                        <button class="quick-q" data-q="Cum pot dormi mai bine?">😴 Cum dorm mai bine?</button>
-                        <button class="quick-q" data-q="Dă-mi un plan de exerciții pentru azi">💪 Exerciții pentru azi</button>
+                    <div class="chat-input-area">
+                        <button id="attach-btn" class="icon-btn attach-btn">📎</button>
+                        <textarea id="chat-input" placeholder="Scrie aici..." rows="1"></textarea>
+                        <button id="chat-send" class="send-btn">➤</button>
                     </div>
                 </div>
             </section>
 
-            <!-- Profile -->
-            <section id="page-profile" class="page">
-                <h2>Profilul Meu de Sănătate</h2>
-
-                <form id="profile-form" class="form">
-                    <div class="form-group">
-                        <label for="profile-name">Nume</label>
-                        <input type="text" id="profile-name" placeholder="Numele tău">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="profile-age">Vârstă</label>
-                            <input type="number" id="profile-age" placeholder="30" min="1" max="120">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-sex">Sex</label>
-                            <select id="profile-sex">
-                                <option value="">Selectează</option>
-                                <option value="M">Masculin</option>
-                                <option value="F">Feminin</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="profile-height">Înălțime (cm)</label>
-                            <input type="number" id="profile-height" placeholder="175" min="50" max="250">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-weight">Greutate (kg)</label>
-                            <input type="number" id="profile-weight" placeholder="75" min="20" max="300" step="0.1">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Condiții medicale</label>
-                        <div class="tags-input" id="conditions-tags">
-                            <input type="text" id="condition-input" placeholder="ex: diabet, hipertensiune...">
-                            <button type="button" id="add-condition" class="tag-add">+</button>
-                        </div>
-                        <div class="tags-list" id="conditions-list"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Alergii</label>
-                        <div class="tags-input" id="allergies-tags">
-                            <input type="text" id="allergy-input" placeholder="ex: gluten, lactate...">
-                            <button type="button" id="add-allergy" class="tag-add">+</button>
-                        </div>
-                        <div class="tags-list" id="allergies-list"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Medicamente curente</label>
-                        <div class="tags-input" id="meds-tags">
-                            <input type="text" id="med-input" placeholder="ex: metformin, aspirin...">
-                            <button type="button" id="add-med" class="tag-add">+</button>
-                        </div>
-                        <div class="tags-list" id="meds-list"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="profile-activity">Nivel activitate</label>
-                        <select id="profile-activity">
-                            <option value="">Selectează</option>
-                            <option value="sedentary">Sedentar</option>
-                            <option value="light">Ușor activ</option>
-                            <option value="moderate">Moderat activ</option>
-                            <option value="active">Activ</option>
-                            <option value="very-active">Foarte activ</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="profile-goal">Obiectiv principal</label>
-                        <select id="profile-goal">
-                            <option value="">Selectează</option>
-                            <option value="lose-weight">Pierdere în greutate</option>
-                            <option value="gain-weight">Creștere în greutate</option>
-                            <option value="maintain">Menținere</option>
-                            <option value="muscle">Creștere masă musculară</option>
-                            <option value="health">Sănătate generală</option>
-                            <option value="energy">Mai multă energie</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="profile-notes">Note adiționale</label>
-                        <textarea id="profile-notes" rows="3" placeholder="Alte informații relevante despre sănătatea ta..."></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">💾 Salvează Profilul</button>
-                </form>
-            </section>
-
-            <!-- Habits -->
-            <section id="page-habits" class="page">
-                <h2>Obiceiuri Zilnice</h2>
-
-                <div class="date-nav">
-                    <button id="prev-day" class="icon-btn">◀</button>
-                    <span id="current-date"></span>
-                    <button id="next-day" class="icon-btn">▶</button>
+            <!-- Weekly Plan -->
+            <section id="page-plan" class="page">
+                <div id="plan-empty" class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h3>Niciun plan generat încă</h3>
+                    <p>Vorbește cu AI-ul, urcă-ți documentele medicale, și cere-i să-ți creeze planul săptămânal.</p>
+                    <button class="btn btn-primary" id="go-to-chat">🤖 Începe conversația</button>
                 </div>
-
-                <div class="habits-grid">
-                    <!-- Water -->
-                    <div class="habit-card">
-                        <div class="habit-header">
-                            <span>💧 Apă</span>
-                            <span id="habit-water-count">0 / 8 pahare</span>
-                        </div>
-                        <div class="habit-progress">
-                            <div class="progress-bar" id="water-progress"></div>
-                        </div>
-                        <div class="habit-controls">
-                            <button class="habit-btn" data-habit="water" data-action="remove">−</button>
-                            <span class="habit-value" id="habit-water-val">0</span>
-                            <button class="habit-btn" data-habit="water" data-action="add">+</button>
-                        </div>
+                <div id="plan-content" class="plan-content hidden">
+                    <div class="plan-header">
+                        <h2>Planul Meu Săptămânal</h2>
+                        <p class="plan-date" id="plan-date"></p>
                     </div>
-
-                    <!-- Steps -->
-                    <div class="habit-card">
-                        <div class="habit-header">
-                            <span>🚶 Pași</span>
-                            <span id="habit-steps-count">0 / 10000</span>
-                        </div>
-                        <div class="habit-progress">
-                            <div class="progress-bar" id="steps-progress"></div>
-                        </div>
-                        <div class="habit-controls">
-                            <input type="number" id="steps-input" placeholder="Nr. pași" min="0" class="habit-input">
-                            <button class="habit-btn-save" data-habit="steps">✓</button>
-                        </div>
-                    </div>
-
-                    <!-- Sleep -->
-                    <div class="habit-card">
-                        <div class="habit-header">
-                            <span>😴 Somn</span>
-                            <span id="habit-sleep-count">-- ore</span>
-                        </div>
-                        <div class="habit-progress">
-                            <div class="progress-bar" id="sleep-progress"></div>
-                        </div>
-                        <div class="habit-controls">
-                            <input type="number" id="sleep-input" placeholder="Ore" min="0" max="24" step="0.5" class="habit-input">
-                            <button class="habit-btn-save" data-habit="sleep">✓</button>
-                        </div>
-                    </div>
-
-                    <!-- Meals -->
-                    <div class="habit-card">
-                        <div class="habit-header">
-                            <span>🍽️ Mese</span>
-                            <span id="habit-meals-count">0 / 3</span>
-                        </div>
-                        <div class="meals-list" id="meals-list"></div>
-                        <button class="btn btn-small" id="add-meal-btn">+ Adaugă masă</button>
-                    </div>
-
-                    <!-- Exercise -->
-                    <div class="habit-card">
-                        <div class="habit-header">
-                            <span>💪 Exerciții</span>
-                            <span id="habit-exercise-count">0 min</span>
-                        </div>
-                        <div class="habit-controls">
-                            <input type="number" id="exercise-input" placeholder="Minute" min="0" class="habit-input">
-                            <select id="exercise-type" class="habit-input">
-                                <option value="cardio">Cardio</option>
-                                <option value="strength">Forță</option>
-                                <option value="flexibility">Flexibilitate</option>
-                                <option value="walking">Plimbare</option>
-                            </select>
-                            <button class="habit-btn-save" data-habit="exercise">✓</button>
-                        </div>
-                    </div>
-
-                    <!-- Mood -->
-                    <div class="habit-card">
-                        <div class="habit-header">
-                            <span>🧠 Dispoziție</span>
-                        </div>
-                        <div class="mood-selector">
-                            <button class="mood-btn" data-mood="1">😢</button>
-                            <button class="mood-btn" data-mood="2">😕</button>
-                            <button class="mood-btn" data-mood="3">😐</button>
-                            <button class="mood-btn" data-mood="4">😊</button>
-                            <button class="mood-btn" data-mood="5">😄</button>
-                        </div>
+                    <div class="plan-days" id="plan-days"></div>
+                    <div class="plan-actions">
+                        <button class="btn btn-small" id="regenerate-plan">🔄 Regenerează planul</button>
+                        <button class="btn btn-small" id="export-plan">📥 Exportă PDF</button>
                     </div>
                 </div>
             </section>
 
             <!-- Documents -->
             <section id="page-documents" class="page">
-                <h2>Documente Medicale</h2>
+                <div class="section-intro">
+                    <h2>Documente Medicale</h2>
+                    <p>Urcă analize, raporturi medicale, rețete. AI-ul le va analiza și va ține cont de ele în recomandări.</p>
+                </div>
 
                 <div class="upload-area" id="upload-area">
                     <div class="upload-icon">📄</div>
-                    <p>Trage fișiere aici sau apasă pentru a încărca</p>
-                    <p class="upload-hint">PDF, imagini, documente text</p>
+                    <p>Apasă pentru a încărca documente</p>
+                    <p class="upload-hint">PDF, imagini, text</p>
                     <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" hidden>
                 </div>
 
                 <div class="documents-list" id="documents-list">
-                    <p class="empty-state">Niciun document încărcat încă</p>
+                    <p class="empty-hint">Niciun document încărcat</p>
                 </div>
             </section>
 
-            <!-- AI Chat -->
-            <section id="page-ai" class="page">
-                <h2>VitaLife AI Advisor</h2>
+            <!-- Apple Health Data -->
+            <section id="page-health-data" class="page">
+                <div class="section-intro">
+                    <h2>Date Apple Health</h2>
+                    <p>Exportă datele din aplicația Health de pe iPhone și urcă-le aici. AI-ul va analiza somnul, activitatea, ritmul cardiac și alte date de la Apple Watch.</p>
+                </div>
 
-                <div class="ai-chat" id="ai-chat">
-                    <div class="chat-messages" id="chat-messages">
-                        <div class="message bot">
-                            <div class="message-content">
-                                Bună! Sunt asistentul tău VitaLife AI. 🌿<br><br>
-                                Pot să te ajut cu:
-                                <ul>
-                                    <li>Sfaturi personalizate de nutriție</li>
-                                    <li>Plan de exerciții</li>
-                                    <li>Interpretarea obiceiurilor tale</li>
-                                    <li>Răspunsuri la întrebări despre sănătate</li>
-                                </ul>
-                                Ce te interesează?
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chat-input-area">
-                        <textarea id="chat-input" placeholder="Scrie întrebarea ta..." rows="1"></textarea>
-                        <button id="chat-send" class="btn btn-primary">➤</button>
-                    </div>
+                <div class="health-export-guide">
+                    <h3>Cum exporti datele:</h3>
+                    <ol>
+                        <li>Deschide aplicația <strong>Health</strong> pe iPhone</li>
+                        <li>Apasă pe poza ta de profil (dreapta sus)</li>
+                        <li>Scroll jos → <strong>Export All Health Data</strong></li>
+                        <li>Salvează fișierul ZIP</li>
+                        <li>Urcă-l aici ↓</li>
+                    </ol>
+                </div>
+
+                <div class="upload-area" id="health-upload-area">
+                    <div class="upload-icon">⌚</div>
+                    <p>Urcă export.zip din Health</p>
+                    <input type="file" id="health-file-input" accept=".zip,.xml" hidden>
+                </div>
+
+                <div id="health-summary" class="health-summary hidden">
+                    <h3>📊 Rezumat date Health</h3>
+                    <div id="health-stats"></div>
                 </div>
             </section>
 
             <!-- Settings -->
             <section id="page-settings" class="page">
-                <h2>Setări</h2>
+                <div class="section-intro">
+                    <h2>Setări</h2>
+                </div>
 
                 <div class="settings-list">
                     <div class="setting-item">
@@ -344,7 +164,7 @@
                             <input type="password" id="api-key" placeholder="sk-...">
                             <button id="save-api-key" class="btn btn-small">Salvează</button>
                         </div>
-                        <p class="setting-hint">Cheia ta este stocată local pe dispozitiv, nu este trimisă nicăieri altundeva.</p>
+                        <p class="setting-hint">Cheia este stocată doar local pe telefonul tău. Ai nevoie de un cont pe platform.openai.com</p>
                     </div>
 
                     <div class="setting-item">
@@ -353,126 +173,70 @@
                             <option value="gpt-4o-mini">GPT-4o Mini (rapid, ieftin)</option>
                             <option value="gpt-4o">GPT-4o (avansat)</option>
                             <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
-                            <option value="gpt-4.1">GPT-4.1</option>
+                            <option value="gpt-4.1">GPT-4.1 (cel mai avansat)</option>
                         </select>
                     </div>
 
                     <div class="setting-item">
-                        <label>Obiective zilnice</label>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="goal-water">Pahare apă</label>
-                                <input type="number" id="goal-water" value="8" min="1" max="20">
-                            </div>
-                            <div class="form-group">
-                                <label for="goal-steps">Pași</label>
-                                <input type="number" id="goal-steps" value="10000" min="1000" max="50000" step="500">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="goal-sleep">Ore somn</label>
-                                <input type="number" id="goal-sleep" value="8" min="4" max="12" step="0.5">
-                            </div>
-                            <div class="form-group">
-                                <label for="goal-exercise">Min exerciții</label>
-                                <input type="number" id="goal-exercise" value="30" min="5" max="180" step="5">
-                            </div>
-                        </div>
-                        <button id="save-goals" class="btn btn-small">Salvează obiectivele</button>
-                    </div>
-
-                    <div class="setting-item">
-                        <label>Date</label>
-                        <button id="export-data" class="btn btn-small">📥 Exportă toate datele</button>
-                        <button id="import-data" class="btn btn-small">📤 Importă date</button>
+                        <label>Date aplicație</label>
+                        <button id="export-data" class="btn btn-small">📥 Exportă backup</button>
+                        <button id="import-data" class="btn btn-small">📤 Importă backup</button>
                         <input type="file" id="import-file" accept=".json" hidden>
-                        <button id="clear-data" class="btn btn-small btn-danger">🗑️ Șterge toate datele</button>
-                    </div>
-
-                    <div class="setting-item app-info">
-                        <p>VitaLife v1.0</p>
-                        <p class="setting-hint">Toate datele sunt stocate local pe dispozitivul tău.</p>
+                        <button id="clear-chat" class="btn btn-small btn-danger">🗑️ Șterge conversația</button>
+                        <button id="clear-all" class="btn btn-small btn-danger">⚠️ Resetează tot</button>
                     </div>
                 </div>
             </section>
 
         </main>
 
-        <!-- Meal Modal -->
-        <div id="meal-modal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Adaugă masă</h3>
-                    <button class="modal-close" data-close="meal-modal">&times;</button>
-                </div>
-                <form id="meal-form">
-                    <div class="form-group">
-                        <label for="meal-type">Tipul mesei</label>
-                        <select id="meal-type">
-                            <option value="breakfast">Mic dejun</option>
-                            <option value="lunch">Prânz</option>
-                            <option value="dinner">Cină</option>
-                            <option value="snack">Gustare</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="meal-desc">Ce ai mâncat?</label>
-                        <textarea id="meal-desc" rows="3" placeholder="Descrie ce ai mâncat..."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Salvează</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Document View Modal -->
-        <div id="doc-modal" class="modal hidden">
-            <div class="modal-content modal-large">
-                <div class="modal-header">
-                    <h3 id="doc-modal-title">Document</h3>
-                    <button class="modal-close" data-close="doc-modal">&times;</button>
-                </div>
-                <div id="doc-modal-body"></div>
-            </div>
-        </div>
-
-        <!-- Bottom Navigation -->
+        <!-- Bottom Nav (simplified) -->
         <nav class="bottom-nav">
-            <button class="nav-item active" data-page="dashboard">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">Acasă</span>
+            <button class="nav-item active" data-page="chat">
+                <span class="nav-icon">🤖</span>
+                <span class="nav-label">AI Chat</span>
             </button>
-            <button class="nav-item" data-page="habits">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Obiceiuri</span>
+            <button class="nav-item" data-page="plan">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Planul Meu</span>
             </button>
             <button class="nav-item" data-page="documents">
-                <span class="nav-icon">📋</span>
+                <span class="nav-icon">📄</span>
                 <span class="nav-label">Documente</span>
             </button>
-            <button class="nav-item" data-page="ai">
-                <span class="nav-icon">🤖</span>
-                <span class="nav-label">AI</span>
-            </button>
-            <button class="nav-item" data-page="profile">
-                <span class="nav-icon">👤</span>
-                <span class="nav-label">Profil</span>
+            <button class="nav-item" data-page="health-data">
+                <span class="nav-icon">⌚</span>
+                <span class="nav-label">Health</span>
             </button>
         </nav>
     </div>
 
+    <!-- Document View Modal -->
+    <div id="doc-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="doc-modal-title">Document</h3>
+                <button class="modal-close" data-close="doc-modal">&times;</button>
+            </div>
+            <div id="doc-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- File picker for chat attach -->
+    <input type="file" id="chat-file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" hidden>
+
+    <script src="js/storage.js"></script>
+    <script src="js/documents.js"></script>
+    <script src="js/health-import.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/plan.js"></script>
+    <script src="js/app.js"></script>
     <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/Fun-App-/sw.js')
-            .then(reg => console.log('SW registered'))
-            .catch(err => console.log('SW error:', err));
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('SW ok'))
+            .catch(e => console.log('SW err:', e));
     }
     </script>
-    <script src="js/storage.js"></script>
-    <script src="js/profile.js"></script>
-    <script src="js/habits.js"></script>
-    <script src="js/documents.js"></script>
-    <script src="js/ai.js"></script>
-    <script src="js/app.js"></script>
 </body>
 </html>

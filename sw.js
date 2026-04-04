@@ -1,13 +1,13 @@
-const CACHE_NAME = 'vitalife-v2';
+const CACHE_NAME = 'vitalife-v3';
 const ASSETS = [
     './',
     './index.html',
     './css/style.css',
     './js/storage.js',
-    './js/profile.js',
-    './js/habits.js',
     './js/documents.js',
+    './js/health-import.js',
     './js/ai.js',
+    './js/plan.js',
     './js/app.js',
     './manifest.json',
     './assets/icon.svg'
@@ -24,18 +24,13 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then(keys =>
-            Promise.all(keys
-                .filter(key => key !== CACHE_NAME)
-                .map(key => caches.delete(key))
-            )
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
         ).then(() => self.clients.claim())
     );
 });
 
 self.addEventListener('fetch', (e) => {
-    if (e.request.method !== 'GET' || e.request.url.includes('api.openai.com')) {
-        return;
-    }
+    if (e.request.method !== 'GET' || e.request.url.includes('api.openai.com')) return;
 
     e.respondWith(
         caches.match(e.request).then(cached => {

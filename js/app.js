@@ -112,12 +112,21 @@ class App {
                 const doc = await documentsManager.addDocument(file);
                 this.pendingAttachments.push({
                     name: file.name,
-                    textContent: doc.textContent || `[Document medical: ${file.name}]`
+                    type: file.type,
+                    dataUrl: doc.data,
+                    textContent: doc.textContent || null
                 });
                 this.showToast(`📎 ${file.name} atașat`, 'success');
             }
             e.target.value = '';
             documentsManager.renderList();
+
+            // Auto-send to AI for analysis
+            if (this.pendingAttachments.length > 0 && !aiAdvisor.isProcessing) {
+                const names = this.pendingAttachments.map(a => a.name).join(', ');
+                document.getElementById('chat-input').value = `Am urcat: ${names}. Te rog analizează documentele/imaginile și spune-mi ce observi.`;
+                this.sendChat();
+            }
         });
 
         // Documents

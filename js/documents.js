@@ -123,8 +123,18 @@ class DocumentsManager {
         return {
             name: doc.name,
             type: doc.type,
-            textContent: doc.textContent || `[Document: ${doc.name}, tip: ${doc.type}, dimensiune: ${this.formatSize(doc.size)}. Utilizatorul a urcat acest document medical. Descrie ce observi și întreabă despre conținut.]`
+            dataUrl: doc.data,
+            textContent: doc.textContent || null
         };
+    }
+
+    getAllDocsForChat() {
+        return this.documents.map(doc => ({
+            name: doc.name,
+            type: doc.type,
+            dataUrl: doc.data,
+            textContent: doc.textContent || null
+        }));
     }
 
     escapeHtml(text) {

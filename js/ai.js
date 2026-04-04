@@ -126,6 +126,62 @@ Dacă este prima conversație (fără istoric), salută-l călduros și începe 
         return el && el.textContent.trim() ? 'Are deja un plan activ.' : null;
     }
 
+    // Build multimodal content array for Vision API
+    _buildMessageContent(text, attachments) {
+        if (!attachments || attachments.length === 0) {
+            return text;
+        }
+
+        // Multimodal: array of content parts
+        const parts = [];
+
+        // Text part
+        let textPart = text;
+        if (attachments.length > 0) {
+            textPart += '\n\n[Am atașat ' + attachments.length + ' document(e): ' +
+                attachments.map(a => a.name).join(', ') + '. Analizează-le detaliat, citește tot ce vezi și pune-mi întrebări despre ce observi.]';
+        }
+        parts.push({ type: 'text', text: textPart });
+
+        // Image/file parts
+        for (const att of attachments) {
+            if (att.dataUrl && this._isImage(att.type || att.name)) {
+                // Send image directly to Vision API
+                parts.push({
+                    type: 'image_url',
+                    image_url: {
+                        url: att.dataUrl,
+                        detail: 'high'
+                    }
+                });
+            } else if (att.textContent) {
+                // Text-based files (txt, etc)
+                parts.push({
+                    type: 'text',
+                    text: `\n--- Conținut fișier: ${att.name} ---\n${att.textContent.substring(0, 12000)}\n--- Sfârșit fișier ---`
+                });
+            } else if (att.dataUrl && att.type === 'application/pdf') {
+                // PDF - send as image if possible (first page), or note it
+                // OpenAI accepts PDFs as file input in some models
+                parts.push({
+                    type: 'file',
+                    file: {
+                        filename: att.name,
+                        file_data: att.dataUrl
+                    }
+                });
+            }
+        }
+
+        return parts;
+    }
+
+    _isImage(typeOrName) {
+        const s = (typeOrName || '').toLowerCase();
+        return s.startsWith('image/') || s.endsWith('.png') || s.endsWith('.jpg') ||
+               s.endsWith('.jpeg') || s.endsWith('.webp') || s.endsWith('.gif');
+    }
+
     async sendMessage(userMessage, attachments = []) {
         const apiKey = await this.getApiKey();
         if (!apiKey) {
@@ -137,23 +193,26 @@ Dacă este prima conversație (fără istoric), salută-l călduros și începe 
 
         this.isProcessing = true;
 
-        // Build user message with attachments
-        let content = userMessage;
-        if (attachments.length > 0) {
-            content += '\n\n[Documente atașate: ' + attachments.map(a => a.name).join(', ') + ']';
-            for (const att of attachments) {
-                if (att.textContent) {
-                    content += `\n\n--- Conținut ${att.name} ---\n${att.textContent.substring(0, 8000)}`;
-                }
-            }
-        }
+        // Build multimodal content (images + text)
+        const content = this._buildMessageContent(userMessage, attachments);
 
-        this.chatHistory.push({ role: 'user', content });
+        // For chat history storage, keep text-only version (images are too large)
+        const historyContent = typeof content === 'string' ? content :
+            content.filter(p => p.type === 'text').map(p => p.text).join('\n');
+
+        this.chatHistory.push({ role: 'user', content: historyContent });
 
         // Keep reasonable context
         if (this.chatHistory.length > 40) {
             this.chatHistory = this.chatHistory.slice(-40);
         }
+
+        // Build messages for API - use full multimodal content for current message
+        const apiMessages = [
+            { role: 'system', content: this.buildSystemPrompt() },
+            ...this.chatHistory.slice(0, -1),
+            { role: 'user', content: content }
+        ];
 
         try {
             const model = await this.getModel();
@@ -165,10 +224,7 @@ Dacă este prima conversație (fără istoric), salută-l călduros și începe 
                 },
                 body: JSON.stringify({
                     model,
-                    messages: [
-                        { role: 'system', content: this.buildSystemPrompt() },
-                        ...this.chatHistory
-                    ],
+                    messages: apiMessages,
                     max_tokens: 4000,
                     temperature: 0.7
                 })
@@ -185,8 +241,6 @@ Dacă este prima conversație (fără istoric), salută-l călduros și începe 
             const reply = data.choices[0].message.content;
 
             this.chatHistory.push({ role: 'assistant', content: reply });
-
-            // Save conversation
             await this.saveHistory();
 
             this.isProcessing = false;
